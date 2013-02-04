@@ -68,24 +68,21 @@ SCWeb.core.Translation = {
         		
 		var cache = this.getCache();
 		var needToTranslate = [];
-		var translated = [];
-		for(var i = 0; i < objects.length; i++){
+
+        for(var i = 0; i < objects.length; i++){
 			var translation = cache.getTranslation(lang, objects[i]);
-			if(translation){
-				translated.push(objects[i]);
-			} else {
-				needToTranslate.push(objects[i]);
-			}
-			
+			if(!translation){
+                needToTranslate.push(objects[i]);
+            }
 		}
 		
 		if(needToTranslate.length > 0){
 			SCWeb.core.Server.resolveIdentifiers(needToTranslate, lang, function(namesMap) {
 				cache.addTranslations(lang, namesMap);
-				callback(cache.getTranslations(lang, objects));
+				callback(cache._getLanguage(lang));
 			});
 		} else {
-			callback(cache.getTranslations(lang, objects));
+			callback(cache._getLanguage(lang));
 		}
 		
     },
@@ -116,20 +113,6 @@ SCWeb.core.Translation.Cache.prototype = {
     /**
      *
      * @param {String} language
-     * @param {Array} objects Objects for translating
-     * @return {Object}
-     */
-	getTranslations	: function(language, objects){
-		var map = {};
-		for(var i = 0; i < objects.length; i++ ){
-			map[objects[i]] = this.getTranslation(language, objects[i]);
-		}
-		return map;	
-	},
-
-    /**
-     *
-     * @param {String} language
      * @param {String} obj Object for translating
      * @return {*}
      */
@@ -148,20 +131,10 @@ SCWeb.core.Translation.Cache.prototype = {
      * @param {Object} map
      */
 	addTranslations	: function(language, map){
+        var lang = this._getLanguage(language, true);
 		for(var scAddr in map){
-			this.setTranslation(language, scAddr, map[scAddr]);
+            lang[scAddr] = map[scAddr];
 		}
-	},
-
-    /**
-     * Add translation to cache
-     * @param {String} language
-     * @param {String} obj
-     * @param {String} value
-     */
-	setTranslation	: function(language, obj, value){
-		var lang = this._getLanguage(language, true);
-		lang[obj] = value;
 	},
 
     /**
