@@ -2,6 +2,8 @@ SCWeb.core.Translation = {
     
     current_language: null,
     listeners: [],
+	
+	_cache	: null,
     
     /** 
      * @param {Object} listener Listener object that will be notified on translation.
@@ -63,10 +65,83 @@ SCWeb.core.Translation = {
         
         if (!language)
             lang = this.current_language;
-        
-        SCWeb.core.Server.resolveIdentifiers(objects, lang, function(namesMap) {
-            callback(namesMap);
-        });
-    }
+        		
+		var cache = this.getCache();
+		var needToTranslate = [];
+		var translated = [];
+		for(var i = 0; i < objects.length; i++){
+			var translation = cache.getTranslation(lang, objects[i]);
+			if(translation){
+				translated.push(objects[i]);
+			} else {
+				needToTranslate.push(objects[i]);
+			}
+		}
+		var self = this;
+		
+		if(needToTranslate.length > 0){
+			SCWeb.core.Server.resolveIdentifiers(needToTranslate, lang, function(namesMap) {
+				cache.addTranslations(lang, namesMap);
+				callback(cache.getTranslations(lang, objects));
+			});
+		} else {
+			callback(cache.getTranslations(lang, objects));
+		}
+		
+    },
+	
+	getCache	: function(){
+		if(!this._cache){
+			this._cache = new SCWeb.core.Translation.Cache();
+		};
+		return this._cache;
+	}
 
 };
+
+SCWeb.core.Translation.Cache = function(){
+	this._init();
+};
+
+SCWeb.core.Translation.Cache.prototype = {
+
+	_init	: function(){
+		this._languages = {};
+	},
+	
+	getTranslations	: function(language, objects){
+		var map = {};
+		for(var i = 0; i < objects.length; i++ ){
+			map[objects[i]] = this.getTranslation(language, objects[i]);
+		}
+		return map;	
+	},
+	
+	getTranslation	: function(language, obj){
+		
+		var lang = this._getLanguage(language);
+		if(lang){
+			return lang[obj];
+		}
+		return null;
+	},
+	
+	addTranslations	: function(language, map){
+		for(var scAddr in map){
+			this.setTranslation(language, scAddr, map[scAddr]);
+		}
+	},
+	
+	setTranslation	: function(language, obj, value){
+		var lang = this._getLanguage(language, true);
+		lang[obj] = value;
+	},
+	
+	_getLanguage	: function(language, createIfNotExist){
+		if(!this._languages[language] && createIfNotExist){
+			this._languages[language] = {};
+		}
+		return this._languages[language];
+	}
+
+}
