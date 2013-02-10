@@ -2,6 +2,8 @@ SCWeb.core.Translation = {
     
     current_language: null,
     listeners: [],
+	
+	_cache	: null,
     
     /** 
      * @param {Object} listener Listener object that will be notified on translation.
@@ -63,10 +65,90 @@ SCWeb.core.Translation = {
         
         if (!language)
             lang = this.current_language;
-        
-        SCWeb.core.Server.resolveIdentifiers(objects, lang, function(namesMap) {
-            callback(namesMap);
-        });
-    }
+        		
+		var cache = this.getCache();
+		var needToTranslate = [];
+
+        for(var i = 0; i < objects.length; i++){
+			var translation = cache.getTranslation(lang, objects[i]);
+			if(!translation){
+                needToTranslate.push(objects[i]);
+            }
+		}
+		
+		if(needToTranslate.length > 0){
+			SCWeb.core.Server.resolveIdentifiers(needToTranslate, lang, function(namesMap) {
+				cache.addTranslations(lang, namesMap);
+				callback(cache._getLanguage(lang));
+			});
+		} else {
+			callback(cache._getLanguage(lang));
+		}
+		
+    },
+
+	getCache	: function(){
+		if(!this._cache){
+			this._cache = new SCWeb.core.Translation.Cache();
+		};
+		return this._cache;
+	}
 
 };
+
+/**
+ * Translation cache
+ * @constructor
+ */
+SCWeb.core.Translation.Cache = function(){
+	this._init();
+};
+
+SCWeb.core.Translation.Cache.prototype = {
+
+	_init	: function(){
+		this._languages = {};
+	},
+
+    /**
+     *
+     * @param {String} language
+     * @param {String} obj Object for translating
+     * @return {*}
+     */
+	getTranslation	: function(language, obj){
+		
+		var lang = this._getLanguage(language);
+		if(lang){
+			return lang[obj];
+		}
+		return null;
+	},
+
+    /**
+     * Add translations to cache
+     * @param {String} language
+     * @param {Object} map
+     */
+	addTranslations	: function(language, map){
+        var lang = this._getLanguage(language, true);
+		for(var scAddr in map){
+            lang[scAddr] = map[scAddr];
+		}
+	},
+
+    /**
+     * Get language translation map
+     * @param {String} language
+     * @param {Bool} createIfNotExist
+     * @return {Object} map of language translations
+     * @private
+     */
+	_getLanguage	: function(language, createIfNotExist){
+		if(!this._languages[language] && createIfNotExist){
+			this._languages[language] = {};
+		}
+		return this._languages[language];
+	}
+
+}
