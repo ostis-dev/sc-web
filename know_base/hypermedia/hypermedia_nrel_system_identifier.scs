@@ -1,6 +1,6 @@
 hypermedia_nrel_system_identifier <- sc_node_norole_relation;;
 
-/* identifiers */
+/!* identifiers */
 hypermedia_nrel_system_identifier => hypermedia_nrel_system_identifier:
 	[hypermedia_nrel_system_identifier];;
 
