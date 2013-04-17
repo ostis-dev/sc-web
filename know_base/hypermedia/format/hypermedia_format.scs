@@ -1,6 +1,6 @@
 hypermedia_format <- sc_node_not_relation;;
 
-/* identifiers */
+/!* identifiers */
 hypermedia_format => nrel_main_ru_idtf:
 	[формат];;
 
