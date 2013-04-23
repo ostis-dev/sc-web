@@ -31,9 +31,9 @@ Repo.edit.Form = {
 
 Repo.edit.Editor = {
 
-    init: function() {
+    init: function(elementId) {
         var self = this;
-        var codeArea = document.getElementById("code");
+        var codeArea = document.getElementById(elementId);
         this.editor = CodeMirror.fromTextArea(codeArea,
             {   lineNumbers:true,
                 mode:"scs",
@@ -46,6 +46,8 @@ Repo.edit.Editor = {
             self.editor.setOption(name, state);
         });
 
+        self.text = "";
+
         $('.editorViews button').click(function(){
             var isActive = $(this).attr("class").match("active");
             if (isActive) {
@@ -54,9 +56,21 @@ Repo.edit.Editor = {
 
             var name = $(this).attr("name");
             if (name == "code") {
-               //TODO
+                self.editor.setOption("mode", "scs");
+                self.editor.setOption("lineNumbers", true);
+                self.editor.setOption("readOnly", false);
+                $('.editorSettings').show();
+                self.editor.setValue(self.text);
+                document.getElementsByClassName("CodeMirror-lines")[0].removeChild(CodeMirror.scnView);
             } else if (name == "preview") {
-                //TODO
+                self.text = self.editor.getValue();
+                self.editor.setOption("mode", "scn");
+                self.editor.setOption("readOnly", "nocursor");
+                self.editor.setValue("");
+                self.editor.setOption("lineNumbers", false);
+                $('.editorSettings').hide();
+                document.getElementsByClassName("CodeMirror-lines")[0].appendChild(CodeMirror.scnView);
+                self.editor.refresh();
             }
         });
 

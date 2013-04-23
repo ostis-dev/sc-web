@@ -1,0 +1,43 @@
+
+.SCnNoTransContent {
+    border: solid 1px #cccccc;
+    background-color: #CDC7C6;
+    display: inline-block;
+    padding: 3px;
+    background:url("/static/sc_web/images/scn/content_corner.png") 0 0 no-repeat #eeeeee;
+    white-space: pre;
+}
+
+.SCnKeyword {
+    padding: 20px 2px 0px 2px;
+    font-weight: bold;
+    font-style: italic;
+}
+
+.SCnFieldValue {
+    vertical-align: text-top;
+    padding: 2px;
+    clear: both;
+}
+
+.container {
+
+ }
+
+.SCnFieldMarker {
+    width: 15px;
+    text-align: left;
+    float: left;
+    vertical-align: text-top;
+    font-family: "Unicode Symbols", "Times New Roman", "Apple Symbols","Arial Unicode MS";
+}
+
+.attr {
+    margin-left: 0px;
+}
+
+.scnView {
+    margin-bottom: 50px;
+}
+
+
