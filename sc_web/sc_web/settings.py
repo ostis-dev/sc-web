@@ -18,12 +18,13 @@ MANAGERS = ADMINS
 SCTP_HOST = 'localhost'
 SCTP_PORT = 55770
 
-EVENT_WAIT_TIMEOUT = 5
+REPO_EDIT_TIMEOUT = 60 # seconds
+
 
 DATABASES = {
     'default': {
-        'ENGINE': '',
-        'NAME': '',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'sc_web',
         'USER': '',
         'PASSWORD': '',
         'HOST': '',
@@ -41,11 +42,13 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-MEDIA_ROOT = ''  # os.path.join(os.path.abspath(os.path.dirname(__file__)), 'media')
-MEDIA_URL = ''
+MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'media')
+MEDIA_URL = '/media/'
 
 STATIC_ROOT = ''
 STATIC_URL = '/static/'
+
+
 
 ADMIN_MEDIA_PREFIX = '/static/admin/'
 
@@ -108,8 +111,20 @@ INSTALLED_APPS = (
     'accounts',
     'api',
     'nav',
-    'repo'
+    'pacman',
+    'repo',
+
+    'south',
+    'djcelery',
+    'djkombu',
 )
+
+# Celery settings
+import djcelery
+djcelery.setup_loader()
+CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
+BROKER_BACKEND = 'djkombu.transport.DatabaseTransport'
+BROKER_URL = 'django://'
 
 LOGGING = {
     'version': 1,

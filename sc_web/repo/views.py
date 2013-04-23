@@ -20,19 +20,30 @@ You should have received a copy of the GNU Lesser General Public License
 along with OSTIS. If not, see <http://www.gnu.org/licenses/>.
 -----------------------------------------------------------------------------
 """
-
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.views.generic.base import TemplateView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.conf import settings
+
 from logic import Repository
 import json, os
+from django.utils.datetime_safe import datetime
 
 __all__ = (
     'RepoView',
+    'FileEdit',
     
-    'get_files',
+    'list_files',
+    'file_content',
+    'commit_info',
+    'save_content',
+    'create',
+    'lock',
+    'update',
+    'unlock'
 )
 
 
@@ -65,6 +76,7 @@ class FileEdit(TemplateView):
         return context
 
 # ----- Ajax -----
+@login_required
 def list_files(request):
     result = None
     if request.is_ajax():
@@ -72,35 +84,13 @@ def list_files(request):
 
         repo = Repository()
         tree = repo.tree(path)
-                
-        result = []
-        for directory in tree.trees:
-            attrs = {}
-            attrs['path'] = directory.path#.split('/')[-1]
-            attrs['is_dir'] = True
-            attrs['name'] = directory.name
-            
-            result.append(attrs)
-            
-        for blob in tree.blobs:
-            attrs = {}
-            attrs['path'] = blob.path#.split('/')[-1]
-            attrs['is_dir'] = False
-            attrs['name'] = blob.name
-            
-            result.append(attrs)
-            
-        for attrs in result:
-            commits = repo.commits(attrs['path'])
-            attrs['date'] = commits[0].authored_date
-            attrs['author'] = commits[0].author.name
-            attrs['summary'] = commits[0].summary
         
-        result = json.dumps(result)
+        result = json.dumps(tree)
 
     return HttpResponse(result, 'application/json')
 
-def file_content(request):
+@login_required
+def content(request):
     result = None
     if request.is_ajax():
         path = request.GET.get(u'path', '/')
@@ -110,19 +100,99 @@ def file_content(request):
 
     return HttpResponse(result, 'text/plain')
 
+@login_required
 def commit_info(request):
     result = None
     if request.is_ajax():
         rev = request.GET.get(u'rev', None)
 
         repo = Repository()
-        commit = repo.commit(rev)
+        commit = repo.get_commit(rev)
         
-        result = {
-                  'author': commit.author.name,
-                  'date': commit.authored_date,
-                  'summary': commit.summary
-                  }
-        result = json.dumps(result)
+        result = json.dumps(commit)
 
     return HttpResponse(result, 'application/json')
+
+@login_required
+@csrf_exempt                                                                                  
+def save(request):
+    result = False
+    if request.is_ajax():
+        
+        path = request.POST.get(u'path', None)
+        summary = request.POST.get(u'summary', None)
+        data = request.POST.get(u'data', None)
+        
+        repo = Repository()
+        result = repo.save(path, data, request.user.username, request.user.email, summary)
+        
+    return HttpResponse(json.dumps({ 'success': result }), 'application/json')
+
+@login_required
+@csrf_exempt
+def create(request):
+    result = False
+    if request.is_ajax():
+        
+        path = request.POST.get(u'path', None)
+        is_dir = request.POST.get(u'is_dir', False)
+        
+        if is_dir == u'true':
+            is_dir = True
+        else:
+            is_dir = False
+        
+        repo = Repository()
+        result = repo.create(path, is_dir, request.user.username, request.user.email)
+        
+    return HttpResponse(json.dumps({ 'success': result }), 'application/json')
+
+@login_required
+def lock(request):
+    result = False
+    if request.is_ajax():
+        
+        path = request.GET.get(u'path', None)
+        
+        repo = Repository()
+        result = repo.lock(path, request.user.username)
+        
+    return HttpResponse(json.dumps( result ), 'application/json')
+
+@login_required
+def update(request):
+    result = False
+    if request.is_ajax():
+        
+        path = request.GET.get(u'path', None)
+        
+        repo = Repository()
+        result = repo.update(path, request.user.username)
+        
+    return HttpResponse(json.dumps( result ), 'application/json')
+
+@login_required
+def unlock(request):
+    result = False
+    if request.is_ajax():
+        
+        path = request.GET.get(u'path', None)
+        
+        repo = Repository()
+        result = repo.unlock(path, request.user.username)
+        
+    return HttpResponse(json.dumps( { 'success': result } ), 'application/json')
+
+@login_required
+@csrf_exempt
+def tree_list(request):
+    result = False
+    if request.is_ajax():
+        
+        path = request.POST.get(u'path', None)
+        is_dir = request.POST.get(u'is_dir', False)
+        
+    # @todo implement me
+        
+    return HttpResponse(json.dumps({ 'success': result }), 'application/json')
+
