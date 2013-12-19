@@ -108,3 +108,90 @@ SCWeb.ui.Menu = {
         return this._items;
     }
 };
+SCWeb.ui.Clarification = {
+	    tooltipElem : null,
+	    init : function(objects)
+	    {   
+	         var self = this;
+	         var items = {};
+	         var data = '', id, index;
+	         var idx = 1;
+	         var used = {};
+	         for(var i = 1; i <= objects.length; i++) {
+				id = objects[i - 1];
+				
+				if (used[id]) continue; // skip objects, that was processed
+				used[id] = true;
+	            
+	            index = idx + '_';
+	            if (i != 1) data += '&';
+	            data = index + '=' + id;
+	                 self._createClarification(id);     
+	      }
+
+	    },
+	    fireUpdate: function(namesMap) {
+			// notify listeners for new translations
+			SCWeb.core.EventManager.emit("translation/update", namesMap);
+	    },
+	_createClarification: function(id)
+			{
+	                    var self = this;
+	                    var sc_addr = id;
+	                    var isEnabled = true;
+	                    var offsetFromElement =  10 ;
+	                    $('[sc_addr="'+sc_addr+'"]').hover(function(e){
+
+	                  var elem;
+		     	  var html;    
+	                  var items = {};
+	                  SCWeb.core.Server.resolveClarifications('1_='+sc_addr,function(result){  
+	                    items = result;
+	                    for(var it in result){
+	                       self.show({
+	                            elem : $('[sc_addr="'+it+'"]'),
+	                            html : html = items[it]+""
+	                       });
+	                    }
+	                }); 
+		     		
+	                    }
+	            ,function(e){ 
+					
+	            	$('[class = "tooltip"]').remove();
+			         
+				});
+				
+			},
+	                show: function(options)
+	                {
+	                    var self = this;
+	                    var isEnabled = true;
+	                    var offsetFromElement =  10 ;
+	                          var elem = options.elem;
+		         	  var html = options.html; 
+	                          var elemCoords = elem.offset();
+		     	    var winLeft = $(window).scrollLeft();
+	        	    var winTop = $(window).scrollTop();
+	      	        self.tooltipElem = $('<div/>', {
+	      	        "class" : 'tooltip',
+	      	        html: html
+	      	      });
+	                  
+		        	
+		        	    self.tooltipElem.appendTo('body'); 
+		        	 
+		        	    var left = elemCoords.left + (elem.outerWidth() - self.tooltipElem.outerWidth())/2^0;
+		        	    if (left < winLeft) left = winLeft; 
+		        	    var top = elemCoords.top - self.tooltipElem.outerHeight() - offsetFromElement;
+		        	    if (top < winTop) {
+		        	      top = elemCoords.top + elem.outerHeight() + offsetFromElement;
+		        	    self.tooltipElem.show();
+		        	    }
+		        	    self.tooltipElem.css({
+		        	        left: left,
+		        	        top: top
+		        	    });
+	                }
+	};
+

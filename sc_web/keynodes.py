@@ -44,6 +44,7 @@ class KeynodeSysIdentifiers:
     
     nrel_system_identifier = 'nrel_system_identifier'
     nrel_main_idtf = 'nrel_main_idtf'
+    nrel_clarification = 'nrel_clarification'
     nrel_translation = 'nrel_translation'
     nrel_decomposition = 'nrel_decomposition'
     nrel_authors = 'nrel_authors'

@@ -45,6 +45,7 @@ __all__ = (
     'get_identifier',
     'get_menu_commands',
     'do_command',
+    'get_clarification',
     'available_output_langs',
     'available_idtf_langs',
     'sc_addrs',
@@ -189,6 +190,86 @@ def idtf_resolve(request):
 
     return HttpResponse(result, 'application/json')
 
+@csrf_exempt
+def clarification_resolve(request):
+    result = None
+    if request.is_ajax():
+        # get arguments
+        idx = 1
+        arguments = []
+        arg = ''
+        while arg is not None:
+            arg = request.POST.get(u'%d_' % idx, None)
+            if arg is not None:
+                arguments.append(arg)
+            idx += 1
+
+        sctp_client = new_sctp_client()
+        keys = Keynodes(sctp_client)    
+        keynode_nrel_clarification = keys[KeynodeSysIdentifiers.nrel_clarification]
+        keynode_nrel_system_identifier = keys[KeynodeSysIdentifiers.nrel_system_identifier]
+        
+        sc_session = logic.ScSession(request.user, request.session, sctp_client, keys)
+        used_lang = sc_session.get_used_language()
+        
+        
+
+        result = {}
+        # get requested identifiers for arguments
+        for addr_str in arguments:
+            addr = ScAddr.parse_from_string(addr_str)   
+            print 'parsed %s' % addr_str
+            if addr is None:
+                print 'Can\'t parse sc-addr from argument: %s' % addr_str
+                return serialize_error(404, 'Can\'t parse sc-addr from argument: %s' % addr_str)
+            found = False
+             #main idft
+            identifier = sctp_client.iterate_elements(
+                                                      SctpIteratorType.SCTP_ITERATOR_5F_A_A_A_F,
+                                                      addr,
+                                                      ScElementType.sc_type_arc_common | ScElementType.sc_type_const,
+                                                      ScElementType.sc_type_link,
+                                                      ScElementType.sc_type_arc_pos_const_perm,
+                                                      keynode_nrel_clarification
+                                                      )
+            idtf_value = None
+            if identifier is not None:
+                for res in identifier:
+                    idtf_addr = res[2]
+                    
+                    # check if founded main identifier is for used language
+                    langs = sctp_client.iterate_elements(
+                                                         SctpIteratorType.SCTP_ITERATOR_3F_A_F,
+                                                         used_lang,
+                                                         ScElementType.sc_type_arc_pos_const_perm,
+                                                         idtf_addr
+                                                         )
+                    if langs is not None:
+                        # get identifier value
+                        idtf_value = sctp_client.get_link_content(idtf_addr)
+                        idtf_value = idtf_value.decode('utf-8')
+                        found = True
+                        result[addr_str] = idtf_value
+
+            # if identifier not found, then get system identifier
+            if not found:
+                identifier = sctp_client.iterate_elements(
+                                                          SctpIteratorType.SCTP_ITERATOR_5F_A_A_A_F,
+                                                          addr,
+                                                          ScElementType.sc_type_arc_common | ScElementType.sc_type_const,
+                                                          ScElementType.sc_type_link,
+                                                          ScElementType.sc_type_arc_pos_const_perm,
+                                                          keynode_nrel_clarification
+                                                          )
+                if identifier is not None:
+                    idtf_value = sctp_client.get_link_content(identifier[0][2])
+                    idtf_value = idtf_value.decode('utf-8')
+            
+                    result[addr_str] = idtf_value
+            
+        result = json.dumps(result)
+
+    return HttpResponse(result, 'application/json')
 
 @csrf_exempt
 def cmd_do(request):
