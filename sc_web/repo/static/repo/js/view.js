@@ -16,12 +16,16 @@ Repo.view.Tree = {
         this.newDirNameErrorText = $('#tree-browser-dirname-error');
         this.newDirCreateButton = $('#tree-browser-dircreate-button');
         this.newDirModal = $('#new-dir-modal');
+
+	this.newFileUploadButton = $('#tree-browser-fileupload-button');
+	this.uploadFileModal = $('#upload-file-modal');
         
         this.newFileNameInput.bind('input', $.proxy(this.onNewFileNameChanged, this));
         this.newDirNameInput.bind('input', $.proxy(this.onNewDirNameChanged, this));
         
         this.newFileCreateButton.click($.proxy(this.onNewFileCreate, this));
         this.newDirCreateButton.click($.proxy(this.onNewDirCreate, this));
+	this.newFileUploadButton.click($.proxy(this.onNewFileUpload, this));
         
         this.updateToRepoPath(this.repoPath);
     },
@@ -243,6 +247,39 @@ Repo.view.Tree = {
                 },
                 error: function(data) {
                     alert("Erro while create directory: " + abspath);
+                }
+        });
+    },
+
+    /** Callback fucntion on new file upload button click
+     */
+    onNewFileUpload: function() {
+        var self = this;
+        var path = this.newFileNameInput.val() ;
+        var abspath = this.absRepoPath(path);
+        
+        
+        $.ajax({
+                type: 'POST',
+                url: '/repo/api/upload',
+                data: { 
+                        'path': abspath,
+			'data': path
+                        },
+                success: function(data) {
+		   /* if (data.success) {
+			self.proceessFileUpload();
+		    } else {
+		        self.processFileUploadError();
+		    }*/
+
+                },
+                complete: function(data) {
+                    self.newFileModal.modal('hide');
+                    self.updateToRepoPath(self.repoPath);
+                },
+                error: function(data) {
+                    alert("Error while upload file: " + abspath);
                 }
         });
     },

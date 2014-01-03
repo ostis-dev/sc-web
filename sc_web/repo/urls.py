@@ -16,6 +16,7 @@ urlpatterns = patterns('repo.views',
     url(r'^api/unlock$', 'unlock', name='unlock'),
     url(r'^api/update$', 'update', name='update'),
     url(r'^api/content$', 'content', name='content'),
+    url(r'^api/upload$', 'upload', name='upload'),
     
     url(r'^api/tree$', 'tree_list', name='tree_list'),
     
