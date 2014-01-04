@@ -257,31 +257,48 @@ Repo.view.Tree = {
         var self = this;
         var path = this.newFileNameInput.val() ;
         var abspath = this.absRepoPath(path);
+	var upload_chunk_size = 120000;
+	var pos = 0;
         
-        
-        $.ajax({
-                type: 'POST',
-                url: '/repo/api/upload',
-                data: { 
-                        'path': abspath,
-			'data': path
-                        },
-                success: function(data) {
-		   /* if (data.success) {
-			self.proceessFileUpload();
-		    } else {
-		        self.processFileUploadError();
-		    }*/
+        while (pos<path.length){
+	    
+            $.ajax({
+                    type: 'POST',
+                    url: '/repo/api/upload',
+                    data: { 
+                            'path': abspath,
+			    'data': path.substring(pos,pos+upload_chunk_size)
+                            },
+                    success: function(data) {
+		       /* if (data.success) {
+	    		self.proceessFileUpload();
+		        } else {
+		            self.processFileUploadError();
+		        }*/
+    
+                    },
+                    complete: function(data) {
+                        self.newFileModal.modal('hide');
+                        self.updateToRepoPath(self.repoPath);
+                    },
+                    error: function(data) {
+                        alert("Error while upload file: " + abspath);
+                    }
+            });
+	    pos +=upload_chunk_size;
+	    var p = Math.round(pos*100/path.length);
+	    var progress = setInterval(function() {
+    	        var $bar = $('.progress-bar');
 
-                },
-                complete: function(data) {
-                    self.newFileModal.modal('hide');
-                    self.updateToRepoPath(self.repoPath);
-                },
-                error: function(data) {
-                    alert("Error while upload file: " + abspath);
-                }
-        });
+    		if ($bar.width()==400) {
+        	    clearInterval(progress);
+        	    $('.progress').removeClass('active');
+    		} else {
+        	    $bar.width($bar.width()+p);
+    		}
+    		$bar.text($bar.width()/4 + "%");
+	    }, 800);
+	}
     },
     
     /** Returns abs repo path depending on current path
@@ -295,5 +312,8 @@ Repo.view.Tree = {
 }
 
 $(document).ready(function() {
-    Repo.view.Tree.init();    
+    Repo.view.Tree.init();  
+    
+    
+  
 });
