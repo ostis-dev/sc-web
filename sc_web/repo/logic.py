@@ -326,7 +326,6 @@ class Repository:
             f = open(abspath, "w")
             f.write(content)
             f.close()
-            message = 'Upload file: %s' % path
                 
             self.repo.git.add(abspath)
             self._commit(authorName, authorEmail, message)
