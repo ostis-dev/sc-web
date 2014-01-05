@@ -32,7 +32,7 @@
     </div>
     
     {# Upload file modal dialog #}
-    <div id="upload-file-modal" class="modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div id="upload-file-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
         <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
             <h2 id="upload-file-modal-label">Upload file</h2>
@@ -42,16 +42,12 @@
             <div class="input-append">
                 <input id="tree-browser-filename-input" class="span2 input-xxlarge tree-browser-filename-input" type="file" name="file">
             </div>
-	    <div class="containerbar">	        
-		<div id="progress-modal" class="progress progress-striped active">
-		    <div class="progress-bar progress-bar-info" aria-valuemin="0" aria-valuemax="100" style="width: 0%;"></div>
-	        </div>
-	    </div>
+
             <p id="tree-browser-filename-error">This file already exist</p>
         </div>
         <div class="modal-footer">
             <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-            <button id="tree-browser-fileupload-button" class="btn btn-primary">Upload</button>
+            <button href="#progress-upload-modal" role="button" data-toggle="modal"id="tree-browser-fileupload-button" class="btn btn-primary">Upload</button>
         </div>
     </div>
 
@@ -93,6 +89,28 @@
             <button id="tree-browser-dircreate-button" class="btn btn-primary">Create</button>
         </div>
     </div>
+
+    {# Progress upload dialog #}
+    <div class="modal fade" id="progress-upload-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  	<div class="modal-dialog">
+    	    <div class="modal-content">
+      		<div class="modal-header">
+        	    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        	    <h4 class="modal-title" id="myModalLabel">Please Wait</h4>
+      		</div>
+     	 	<div class="modal-body center-block">
+	    	    <div class="containerbar">	        
+			<div id="progress-modal" class="progress progress-striped active">
+		    	    <div class="progress-bar progress-bar-info" aria-valuemin="0" aria-valuemax="100" style="width: 0%;"></div>
+	        	</div>
+	    	    </div>
+		</div>
+      	    </div>
+      		<div class="modal-footer">
+        	    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+      		</div>
+        </div>
+  </div>
     
 {% endblock %}
 

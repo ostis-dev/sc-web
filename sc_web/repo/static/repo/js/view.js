@@ -283,20 +283,22 @@ Repo.view.Tree = {
                     },
                     error: function(data) {
                         alert("Error while upload file: " + abspath);
+			$('#progress-upload-modal').modal('hide');
                     }
             });
 	    pos +=upload_chunk_size;
-	    var p = Math.round(pos*100/path.length);
+	    var p = Math.round(pos*500/path.length);
 	    var progress = setInterval(function() {
     	        var $bar = $('.progress-bar');
 
-    		if ($bar.width()==400) {
+    		if ($bar.width()==500) {
         	    clearInterval(progress);
         	    $('.progress').removeClass('active');
+		    $('#progress-upload-modal').modal('hide');
     		} else {
         	    $bar.width($bar.width()+p);
     		}
-    		$bar.text($bar.width()/4 + "%");
+    		$bar.text($bar.width()/5 + "%");
 	    }, 800);
 	}
     },
