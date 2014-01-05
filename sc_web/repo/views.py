@@ -43,7 +43,8 @@ __all__ = (
     'create',
     'lock',
     'update',
-    'unlock'
+    'unlock',
+    'upload'
 )
 
 
@@ -196,3 +197,16 @@ def tree_list(request):
         
     return HttpResponse(json.dumps({ 'success': result }), 'application/json')
 
+@login_required
+@csrf_exempt                                                                                  
+def upload(request):
+    result = False
+    if request.is_ajax():
+        
+        path = request.POST.get(u'path', None)
+        data = request.POST.get(u'data', None)
+        
+        repo = Repository()
+        result = repo.save(path, data, request.user.username, request.user.email)
+        
+    return HttpResponse(json.dumps({ 'success': result }), 'application/json')

@@ -309,4 +309,31 @@ class Repository:
         """Commit all added changes. Only for internal usage
         """
         self.repo.git.commit(author='%s <%s>' % (authorName, authorEmail), message=message)
+
+    def upload(self, path, content, authorName, authorEmail):
+        """Upload file in repository
+        @param path Path of file or directory
+	@param content: New file content
+        @param authorName: Author name
+        @param authorEmail: Author email
+        @return: If function finished successfully, then return True; otherwise return False
+        """
+        abspath = os.path.join(settings.REPO_PATH, path)
+        res = False
+        self.mutex.acquire()
+        
+        try:
+            f = open(abspath, "w")
+            f.write(content)
+            f.close()
+                
+            self.repo.git.add(abspath)
+            self._commit(authorName, authorEmail, message)
+	    res = True
+        except:
+            return False
+        finally:
+            self.mutex.release() 
+        
+        return res 
         
