@@ -11,7 +11,7 @@ urlpatterns = patterns('api.views',
     url(r'^languages/set/$', 'set_language', name="set_language"),
     
     url(r'^idtf/resolve/$', 'idtf_resolve', name='get_identifier'),
-    
+    url(r'^clarification/resolve/$', 'clarification_resolve', name='get_clarification'),  
     url(r'^question/answer/translate/$', 'question_answer_translate', name='question_answer_translate'),
 
     url(r'^link/format/$', 'link_format', name='link_format'),

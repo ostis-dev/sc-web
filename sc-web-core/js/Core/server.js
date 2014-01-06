@@ -199,6 +199,22 @@ SCWeb.core.Server = {
             success: callback
         });
     },
+    /*!
+    *
+    * @param {Array} objects List of sc-addrs to resolve identifiers
+    * @param {Function} callback
+    */
+   resolveClarifications: function(data, callback) {
+		
+
+       //TODO: change to POST because the data may reach the limit of GET parameters string
+       this._push_task({
+           type: 'POST',
+           url: 'api/clarification/resolve/',
+           data: data,
+           success: callback
+       });
+   },
 
     /*!
      * Gets semantic neighbourhood for the specified node.

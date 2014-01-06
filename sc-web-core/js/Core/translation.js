@@ -15,7 +15,7 @@ SCWeb.core.Translation = {
          
         // collect objects, that need to be translated
         var objects = this.collectObjects();
-        
+        SCWeb.ui.Clarification.init(objects);
         // @todo need to remove duplicates from object list
         // translate
         var self = this;
