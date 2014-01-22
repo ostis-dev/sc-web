@@ -106,36 +106,67 @@ SCWeb.core.ComponentSandbox.prototype.resolveAddrs = function(idtf_list, callbac
 /**
  * Create viewers for specified sc-links
  * @param {Object} containers_map Map of viewer containers (key: sc-link addr, value: id of container)
- * @param {Function} callback_success Function that calls on success result. It takes one object as parameter. That object 
- * is a dictionary that contains created snadboxes for links sc-addr
- * @param {Function} callback_error Function that calls on error result
  */
-SCWeb.core.ComponentSandbox.prototype.createViewersForScLinks = function(containers_map, callback_success, callback_error) {
+SCWeb.core.ComponentSandbox.prototype.createViewersForScLinks = function(containers_map) {
+    var dfd = new jQuery.Deferred();
+
     var linkAddrs = [];
     for (var cntId in containers_map)
             linkAddrs.push(containers_map[cntId]);
+
+    if (linkAddrs.length == 0) {
+        dfd.resolve();
+        return dfd.promise();
+    }
                 
     SCWeb.core.Server.getLinksFormat(linkAddrs,
         function(formats) {
             
             var result = {};
+
             for (var cntId in containers_map) {
                 var addr = containers_map[cntId];
                 var fmt = formats[addr];
                 if (fmt) {
-                    
-                    sandbox = SCWeb.core.ComponentManager.createWindowSandbox(fmt, addr, cntId);
-                    
+                    var sandbox = SCWeb.core.ComponentManager.createWindowSandbox(fmt, addr, cntId);
                     if (sandbox) {
                         result[addr] = sandbox;
                     }
                 }
             }
             
-            callback_success(result);
+            dfd.resolve();
         },
-        callback_error
+        function() {
+            dfd.reject();
+        }
     );
+    
+    return dfd.promise();
+};
+
+/*! Function takes content of sc-link from server and call onDataAppend function with it
+ */
+SCWeb.core.ComponentSandbox.prototype.updateContent = function() {
+    var dfd = new jQuery.Deferred();
+    var self = this;
+
+    this.getLinkContent(this.link_addr,
+        function (data) {
+            $.when(self.onDataAppend(data)).then(
+                function() {
+                    dfd.resolve();
+                },
+                function() {
+                    dfd.reject();
+                }
+            );
+        },
+        function () {
+            dfd.reject();
+        });
+
+    return dfd.promise();
 };
 
 // ------ Translation ---------
@@ -199,8 +230,27 @@ SCWeb.core.ComponentSandbox.prototype.onWindowActiveChanged = function(is_active
 
 // --------- Data -------------
 SCWeb.core.ComponentSandbox.prototype.onDataAppend = function(data) {
+    var dfd = new jQuery.Deferred();
+
     if (this.eventDataAppend)
-        this.eventDataAppend(data);
+    {
+        var self = this;
+        $.when(this.eventDataAppend(data)).then(
+            function() {
+                $.when(SCWeb.core.Translation.translate(self.getObjectsToTranslate())).done(
+                    function(namesMap) {
+                        self.updateTranslation(namesMap);
+                        dfd.resolve();
+                    });
+                //dfd.resolve();
+            },
+            function() {
+                dfd.reject();
+            });
         
-    SCWeb.core.Translation.translate(this.getObjectsToTranslate(), $.proxy(this.updateTranslation, this));
+    } else {
+        dfd.resolve();
+    }
+
+    return dfd.promise();
 };

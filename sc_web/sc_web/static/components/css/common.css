@@ -173,8 +173,41 @@ html.drag {
     text-align: center;
 }
 
+/* --- sc-elements --- */
+.sc-element {
+    color: #2a6496;
+    cursor: pointer !important;
+}
 
-// --- print ---
+.sc-not-exist {
+    color: #ff0000;
+}
+
+.sc-content {
+    position: relative;
+    border: solid 1px #cccccc;
+    background-color: #fafafa;
+    padding: 3px;
+    display: inline-block;
+    /*background:url("../images/scn/content_corner.png") 0 0 no-repeat #fafafa;*/
+}
+
+.sc-content:before {
+    position: absolute;
+    top: -8px;
+    left: -1px;
+    content: url("../images/scn/content_corner.png");
+}
+
+.sc-contour {
+    border: solid 1px #96a399;
+    background-color: #fdfdfd;
+    display: inline-block;
+    padding: 3px;
+    border-radius: 8px;
+}
+
+/* --- print --- */
 @media print {
     @page {
         margin: 0.5cm;

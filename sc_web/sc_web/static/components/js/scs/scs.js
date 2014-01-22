@@ -69,7 +69,7 @@ SCs.Viewer.prototype = {
         this.getKeynode = keynode_func;
 
         this.tree = new SCs.SCnTree();
-        this.tree.init();
+        this.tree.init(null, keynode_func);
         
         this.output = new SCs.SCnOutput();
         this.output.init(this.tree, container, this.getKeynode);
@@ -133,6 +133,7 @@ SCs.SCnOutput.prototype = {
         for (idx in this.tree.nodes) {
             output += this.treeNodeHtml(this.tree.nodes[idx]);
         }
+
         return output;
     },
 
@@ -153,8 +154,17 @@ SCs.SCnOutput.prototype = {
         }
 
         if (treeNode.type == SCs.SCnTreeNodeType.Keyword) {
-            output = '<div class="scs-scn-field"><div class="scn-keyword"><a href="#" class="scs-scn-element" sc_addr="' + treeNode.element.addr + '">' + treeNode.element.addr + '</a></div>';
+            output = '<div class="scs-scn-field"><div class="scs-scn-keyword"><a href="#" class="scs-scn-element" sc_addr="' + treeNode.element.addr + '">' + treeNode.element.addr + '</a></div>';
             output += childsToHtml();
+
+            var contourTree = this.tree.subtrees[treeNode.element.addr];
+            if (contourTree) {
+                output += '<div class="scs-scn-field-marker scs-scn-element">=</div>'
+                        + '<div class="scs-scn-element sc-contour scs-scn-field">' //sc_addr="' + treeNode.element.addr + '">'
+                        + this.subtreeToHtml(contourTree)
+                        + '</div>';
+            }
+
             output += '</div>';
         } else {
             var marker = SCs.SCnConnectors[treeNode.predicate.type];
@@ -189,7 +199,14 @@ SCs.SCnOutput.prototype = {
             }
 
             if (!treeNode.isSet) {
-                output += this.treeNodeElementHtml(treeNode);
+                var contourTree = this.tree.subtrees[treeNode.element.addr];
+                if (contourTree) {
+                    output += '<div class="scs-scn-element sc-contour scs-scn-field" sc_addr="' + treeNode.element.addr + '">'
+                            + this.subtreeToHtml(contourTree);
+                } else {
+                    output += this.treeNodeElementHtml(treeNode);
+                    
+                }
                 output += childsToHtml();
             } else {
                 output += '{';
@@ -200,11 +217,10 @@ SCs.SCnOutput.prototype = {
                 output += '}';
                 output += childsToHtml();
             }
-            output += '</div>';
-
-
-            output += '</div>';
+            output += '</div></div>';
         }
+
+        
 
         return output;
     },
@@ -215,22 +231,23 @@ SCs.SCnOutput.prototype = {
             var containerId = this.container + '_' + this.linkCounter;
             this.linkCounter++;
             this.sc_links[containerId] = treeNode.element.addr;
-            return '<div class="scs-scn-element scs-scn-content scs-scn-field" id="' + containerId + '" sc_addr="' + treeNode.element.addr + '">' + '</div>';
+            return '<div class="scs-scn-element sc-content scs-scn-field" id="' + containerId + '" sc_addr="' + treeNode.element.addr + '">' + '</div>';
         }
-
-       /* if (treeNode.isSet) {
-            var res = '';
-            res += '{';
-            for (idx in treeNode.childs) {
-                if (!treeNode.childs[idx].isSetElement) continue;
-                res += this.treeNodeHtml(treeNode.childs[idx]);
-            }
-            res += '}';
-            
-            return res;
-        }*/
         
         return '<a href="#" class="scs-scn-element scs-scn-field" sc_addr="' + treeNode.element.addr + '">' + treeNode.element.addr + '</a>';
+    },
+
+    subtreeToHtml: function(subtree) {
+        var scnOutput = new SCs.SCnOutput();
+        scnOutput.init(subtree, this.container, this.getKeynode);
+        scnOutput.linkCounter = this.linkCounter;
+
+        var res = scnOutput.toHtml();
+        this.linkCounter = scnOutput.linkCounter;
+        for (j in scnOutput.sc_links) {
+            this.sc_links[j] = scnOutput.sc_links[j];
+        }
+        return res;
     },
 
     /*! Sort tree elements
@@ -481,11 +498,13 @@ SCs.SCnTree = function() {
 
 SCs.SCnTree.prototype = {
     
-    init: function() {
+    init: function(contourAddr) {
         this.nodes = [];
         this.addrs = [];    // array of sc-addrs
         this.links = [];
         this.triples = [];
+        this.subtrees = {}; // dictionary of subtrees (contours)
+        this.contourAddr = contourAddr;    // sc-addr of contour, that structure build with this tree
     },
     
     /**
@@ -497,13 +516,145 @@ SCs.SCnTree.prototype = {
         }
     },
     
+    /** Determine all subtrees in triples
+     */
+    determineSubTrees: function() {
+        
+        // collect subtree elements
+        var subtrees = {};
+        var idx = 0;
+        
+        function isElementExist(st, addr) {
+            for (j in st.elements) {
+                if (st.elements[j].el.addr == addr)
+                    return true;
+            }
+            return false;
+        }
+
+        while (idx < this.triples.length) {
+            var tpl = this.triples[idx];
+            
+            if ((tpl[1].type != sc_type_arc_pos_const_perm) || !(tpl[0].type & sc_type_node_struct) || (tpl[0].addr == this.contourAddr)) {
+                idx++;
+                continue;
+            }
+            
+            // check if there are any input/output arcs
+            tpl.ignore = true;
+            for (k in this.triples) {
+                if (this.triples[k][0].addr == tpl[1].addr || this.triples[k][2].addr == tpl[1].addr) {
+                    tpl.ignore = false;
+                    break;
+                }
+            }
+
+            var st = subtrees[tpl[0].addr];
+            if (st) {
+                if (!isElementExist(st, tpl[2].addr))
+                    st.elements.push({el: tpl[2], tpl: tpl});
+            } else {
+                subtrees[tpl[0].addr] = {el: tpl[0], elements: [{el: tpl[2], tpl: tpl}], triples: []};
+            }
+            
+            idx++;
+        }
+        
+        // we have elements, so we need to find all triples, where all element exist in subtree contour
+        idx = 0;
+        while (idx < this.triples.length) {
+            var tpl = this.triples[idx];
+            var used = false;
+            for (addr in subtrees) {
+                var st = subtrees[addr];
+                
+                if (!isElementExist(st, tpl[0].addr) || !isElementExist(st, tpl[1].addr) || !isElementExist(st, tpl[2].addr)) {
+                    continue;
+                }
+                
+                st.triples = st.triples.concat(this.triples.splice(idx, 1));
+                used = true;
+                break;
+            }
+            
+            if (!used)
+                idx++;
+        }
+        
+        // if subtree has no any elements, then merge it back to main tree
+        var delKeys = [];
+        for (addr in subtrees) {
+            if (subtrees[addr].elements.length == 0) {
+                delKeys.push(addr);
+            }
+        }
+        
+        for (idx in delKeys) {
+            delete subtrees[delKeys[idx]];
+        }
+        
+        var self = this;
+        
+        // build tree objects
+        for (addr in subtrees) {
+            var subtree = subtrees[addr];
+            var tree = new SCs.SCnTree();
+            tree.init(subtree.el.addr);
+
+            // determine keywords by input/output arcs number
+            var keywords = {};
+            function addArc(el, value) {
+                    
+                var n = value;
+                if (el.type & (sc_type_arc_mask | sc_type_link)) 
+                    n += -2; // minimize priority of arcs
+                    
+                if (keywords[el.addr]) 
+                    keywords[el.addr].priority += n;
+                else 
+                    keywords[el.addr] = {el: el, priority: n};
+            }
+            
+            //---
+            for (idx in subtree.triples) {
+                var tpl = subtree.triples[idx];
+                var n = 1;
+                
+                if (tpl[2].type & sc_type_arc_mask | tpl[0].type & sc_type_link)
+                    n -= 1; // minimize priority of nodes, that has output/input arcs to other arcs or links
+                if (tpl[2].type & sc_type_link || tpl[0].type & sc_type_link)
+                    n -= 1; // minimize priority of nodes, that has output/input arcs to links
+                if (tpl[1].type & (sc_type_arc_common | sc_type_edge_common))
+                    n += 1;
+
+                if (tpl[0].addr != addr)
+                    addArc(tpl[0], n);
+                if (tpl[2].addr != addr)
+                    addArc(tpl[2], n);
+            }
+            var keywordsList = [];
+            var maxValue = -1;
+            for (a in keywords) {
+                var el = keywords[a];
+                if (el.priority > maxValue) {
+                    keywordsList = [el.el];
+                    maxValue = el.priority;
+                }
+            }
+
+            tree.build(keywordsList, subtree.triples);
+            this.subtrees[addr] = tree;
+            this.addrs = this.addrs.concat(tree.addrs);
+        }
+    },
+    
     /*! Builds tree based on array of triples
      * @param {Array} keyords Array of keywords
      * @param {Array} triples Array of triples
      */
     build: function(keywords, triples) {
         var queue = [];
-        this.triples = triples;
+        this.triples = this.triples.concat(triples);
         // first of all we need to create root nodes for all keywords
         for (i in keywords) {
             var node = new SCs.SCnTreeNode();
@@ -516,7 +667,8 @@ SCs.SCnTree.prototype = {
             queue.push(node);
         }
         
-        this.buildLevels(queue, triples);
+        this.determineSubTrees();
+        this.buildLevels(queue, this.triples);
     },
     
     buildLevels: function(queue, triples) {
@@ -656,7 +808,7 @@ SCsComponent = {
         return new SCsViewer(sandbox);
     },
     getRequestKeynodes: function() {
-        var keynodes = ['nrel_section_base_order'];
+        var keynodes = ['nrel_section_base_order', 'rrel_key_sc_element'];
         return keynodes.concat(SCs.SCnSortOrder);
     }
 };
@@ -695,13 +847,10 @@ SCsViewer.prototype = {
         this.sandbox.eventGetObjectsToTranslate = $.proxy(this.getObjectsToTranslate, this);
         this.sandbox.eventApplyTranslation = $.proxy(this.updateTranslation, this);
         
-        var self = this;
-        $(this.container).delegate('[sc_addr]', 'click', function(e) {
-            self.sandbox.doDefaultCommand([$(e.currentTarget).attr('sc_addr')]);
-        });
-        
         this.viewer = new SCs.Viewer();
         this.viewer.init(sandbox.container, $.proxy(sandbox.getKeynode, sandbox));
+        
+        this.sandbox.updateContent();
     },
     
     // ---- window interface -----
@@ -709,22 +858,26 @@ SCsViewer.prototype = {
         this.data = data;
         this.viewer.appendData(data);
         
-        this.sandbox.createViewersForScLinks(this.viewer.getLinks(), 
-                            function() { // success
-
-                            }, function() { // error
-
+        var dfd = new jQuery.Deferred();
+        
+        $.when(this.sandbox.createViewersForScLinks(this.viewer.getLinks())).then(
+                            function() {
+                                dfd.resolve();
+                            }, 
+                            function() {
+                                dfd.reject();
                             });
+        return dfd.promise();
     },
     
     updateTranslation: function(namesMap) {
         // apply translation
-        $(this.container + ' [sc_addr]').each(function(index, element) {
+        $(SCWeb.ui.Core.selectorWindowScAddr(this.container)).each(function(index, element) {
             var addr = $(element).attr('sc_addr');
             if(namesMap[addr]) {
                 $(element).text(namesMap[addr]);
             } else {
-                if (!$(element).hasClass('scs-scn-content'))
+                if (!$(element).hasClass('sc-content') && !$(element).hasClass('sc-contour'))
                     $(element).html('<b>ⵔ</b>');
             }
         });

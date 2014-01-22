@@ -14,8 +14,8 @@ SCWeb.ui.WindowManager = {
         return question_addr + ':' + fmt_addr;
     },
     
-    init: function(params, callback) {
-        
+    init: function(params) {
+        var dfd = new jQuery.Deferred();
         this.ext_langs = params.external_languages;
         
         this.history_tabs_id = '#history-items';
@@ -73,7 +73,8 @@ SCWeb.ui.WindowManager = {
             });
         });
         
-        callback();
+        dfd.resolve();
+        return dfd.promise();
     },
     
     // ----------- History ------------
@@ -148,7 +149,7 @@ SCWeb.ui.WindowManager = {
             
             SCWeb.ui.Locker.show();
             // scroll window to the top
-            $("html, body").animate({ scrollTop: 0}, "slow");
+            //$("html, body").animate({ scrollTop: 0}, "slow");
             SCWeb.core.Server.getAnswerTranslated(question_addr, fmt_addr, function(data) {
                 self.appendWindow(data.link, fmt_addr);
                 self.window_active_formats[question_addr] = fmt_addr;
@@ -173,24 +174,22 @@ SCWeb.ui.WindowManager = {
         </div>*/
         
         var window_id = 'window_' + addr;
-        var window_html =   '<div class="panel panel-default" sc_addr="' + addr + '" sc-addr-fmt="' + fmt_addr + '">' +
+        var window_html =   '<div class="panel panel-default sc-window" sc_addr="' + addr + '" sc-addr-fmt="' + fmt_addr + '">' +
                                 /*'<div class="panel-heading">' + addr + '</div>' +*/
                                 '<div class="panel-body" id="' + window_id + '"></div>'
                             '</div>';
         this.window_container.prepend(window_html);
         
+        this.hideActiveWindow();
         var sandbox = SCWeb.core.ComponentManager.createWindowSandbox(fmt_addr, addr, window_id);
-        this.sandboxes[addr] = sandbox;
+        if (sandbox) {
+            this.sandboxes[addr] = sandbox;
+            this.setWindowActive(addr);
+        } else {
+            this.showActiveWindow();
+            throw "Error while create window";
+        };
         
-        SCWeb.core.Server.getLinkContent(addr, 
-            function(data) {
-                sandbox.onDataAppend(data);
-            },
-            function() { // error
-            }
-        );
-        
-        this.setWindowActive(addr);
     },
     
     /**
@@ -206,12 +205,22 @@ SCWeb.ui.WindowManager = {
      * @param {String} addr sc-addr of window to make active
      */
     setWindowActive: function(addr) {
+        this.hideActiveWindow();
+        
+        this.active_window_addr = addr;
+        this.showActiveWindow();
+    },
+
+    hideActiveWindow: function() {
         if (this.active_window_addr) {
             this.window_container.find("[sc_addr='" + this.active_window_addr + "']").addClass('hidden');
         }
-        
-        this.active_window_addr = addr;
-        this.window_container.find("[sc_addr='" + this.active_window_addr + "']").removeClass('hidden');        
+    },
+
+    showActiveWindow: function() {
+        if (this.active_window_addr) {
+            this.window_container.find("[sc_addr='" + this.active_window_addr + "']").removeClass('hidden'); 
+        }
     },
 
     // ---------- Translation listener interface ------------
