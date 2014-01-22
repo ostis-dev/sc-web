@@ -28,7 +28,7 @@ Repo.edit.Form = {
         this.lockTime = null;
 
         this.modalSaveButton.click($.proxy(self.saveFile, self));
-        this.editLockButton.click($.proxy(self.lockFile, self));
+        this.editLockButton.click($.proxy(self.toggleFileLock, self));
         this.editSaveButton.click(function() {
             
             if (self.lockedForEdit) {
@@ -124,12 +124,9 @@ Repo.edit.Form = {
             this.lockPanel.addClass('hidden');
             
             this.editSaveButton.removeClass('disabled');
-            this.editLockButton.addClass('disabled');
-            
         } else {
             this.editLockButton.button('reset');
             this.editSaveButton.addClass('disabled');
-            this.editLockButton.removeClass('disabled');
 
             // if file is locked, then author isn't null
             if (this.lockAuthor != null) {
@@ -177,6 +174,49 @@ Repo.edit.Form = {
             });
     },
     
+    /** Unlock file
+     */
+    unlockFile: function() {
+        var self = this;
+        
+        if (!this.lockedForEdit)
+            return; // do nothing, if file unlocked
+
+        $.ajax({
+                type: 'GET',
+                url: '/repo/api/unlock',
+                data: { 
+                        'path': Repo.edit.Form.sourcePath,
+                        },
+                success: function(data) {
+                    self.lockedForEdit = !data.success;
+                    self.lockAuthor = null;
+                    self.lockTime = null;
+
+                    self.updateFileContent();
+                    self.onLockChanged();
+                    
+                    Repo.edit.Editor.setReadOnly(true);
+                    
+                },
+                complete: function(data) {
+                    self.startUpdateInterval();
+                },
+                error: function(data) {
+                    self.processFileSaveError();
+                }
+            });
+    },
+
+    toggleFileLock: function () {
+        if (this.lockedForEdit) {
+            this.unlockFile();
+        }
+        else {
+            this.lockFile();
+        }
+    },
+
     /** Save file changes
      */
     saveFile: function() {
@@ -217,38 +257,7 @@ Repo.edit.Form = {
         
     },
     
-    /** Unlock file
-     */
-    unlockFile: function() {
-        var self = this;
-        
-        $.ajax({
-                type: 'GET',
-                url: '/repo/api/unlock',
-                data: { 
-                        'path': Repo.edit.Form.sourcePath,
-                        },
-                success: function(data) {
-                    
-                    
-                },
-                complete: function(data) {
-                    
-                    self.lockedForEdit = !data.success;
-                    self.lockAuthor = null;
-                    self.lockTime = null;
-                    
-                    self.onLockChanged();
-                    
-                    Repo.edit.Editor.setReadOnly(true);
-                    
-                    self.startUpdateInterval();
-                },
-                error: function(data) {
-                    self.processFileSaveError();
-                }
-            });
-    },
+    
     
     /** Function to sync edit state with server
      */

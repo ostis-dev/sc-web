@@ -9,6 +9,7 @@ urlpatterns = patterns('repo.views',
     url(r'^edit/(?P<path>.*)$', FileEdit.as_view(), name='repo_edit'),
     
     url(r'^api/files$', 'list_files', name='list_files'),
+    url(r'^api/search$', 'search_files', name='search_files'),
     url(r'^api/commit$', 'commit_info', name='commit_info'),
     url(r'^api/save$', 'save', name='save'),
     url(r'^api/create$', 'create', name='create'),

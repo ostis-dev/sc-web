@@ -16,12 +16,15 @@ Repo.view.Tree = {
         this.newDirNameErrorText = $('#tree-browser-dirname-error');
         this.newDirCreateButton = $('#tree-browser-dircreate-button');
         this.newDirModal = $('#new-dir-modal');
+        this.searchFileButton = $('#tree-browser-search-button');
+        this.searchFileInput = $('#tree-browser-search-field');
         
         this.newFileNameInput.bind('input', $.proxy(this.onNewFileNameChanged, this));
         this.newDirNameInput.bind('input', $.proxy(this.onNewDirNameChanged, this));
         
         this.newFileCreateButton.click($.proxy(this.onNewFileCreate, this));
         this.newDirCreateButton.click($.proxy(this.onNewDirCreate, this));
+        this.searchFileButton.click($.proxy(this.onSearch, this));
         
         this.updateToRepoPath(this.repoPath);
     },
@@ -254,6 +257,74 @@ Repo.view.Tree = {
             return path
         
         return this.repoPath + '/' + path
+    },
+
+    onSearch: function() {
+
+        var path = this.repoPath;
+        var query = this.searchFileInput.val();
+        
+        if (query.length == 0) {
+            this.updateToRepoPath(path);
+        }
+        else {
+            this.searchFiles(path, query);
+        }
+    },
+
+    searchFiles: function(path, query) {
+
+        var self = this;
+
+        $.ajax({
+            type: 'GET',
+            url: '/repo/api/search',
+            data: {
+                'path': path,
+                'query': query
+            },
+            async: false,
+            success: function(data) { 
+                filesTableTag = $("#files-list-table");
+                self.listItems = data.slice(0);
+                
+                var resHtml = '';
+                for (var i = 0; i < self.listItems.length; i++) {
+                    var item = self.listItems[i];
+
+                    resHtml += '<tr>';
+                    if (item.is_dir) {
+                        resHtml += '<td><a class="files-item-dir dir-path" repo_path="' + item.path + '">' + item.name + '</a></td>';
+                    } else {
+                        resHtml += '<td><a href="/repo/edit/' + item.path + '" class="files-item-file" repo_path="' + item.path + '">' + item.name + '</a></td>';
+                    }
+                    resHtml += '<td class="commit-author"><i class="icon-user commit-autho-icon"></i>' + item.author + '</td>';
+                    var date = new Date(item.date * 1000);
+                    resHtml += '<td class="commit-date">' + date.toLocaleDateString() + '</td>';
+                    delete date;
+                    resHtml += '<td class="commit-summary">' + item.summary + '</td>';
+                    
+                    resHtml += '</tr>';
+                }
+                
+                if (self.listItems.length == 0) {
+                    resHtml = 'No search results';
+                }
+
+                filesTableTag.empty();
+                filesTableTag.append(resHtml);
+
+                $('.dir-path').click(function() {
+                    var path = $(this).attr('repo_path');
+                    self.updateToRepoPath(path);
+                    return true;
+                });                
+            },
+            complete: function(data) { 
+                
+            }
+        });
+
     }
 }
 

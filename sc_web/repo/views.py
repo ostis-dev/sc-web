@@ -196,3 +196,16 @@ def tree_list(request):
         
     return HttpResponse(json.dumps({ 'success': result }), 'application/json')
 
+@login_required
+def search_files(request):
+    result = None
+    if request.is_ajax:
+
+        path = request.GET.get(u'path', None)
+        query = request.GET.get(u'query', None)
+        repo = Repository()
+        result = repo.search_files(path, query)
+
+    return HttpResponse(json.dumps(result), 'application/json')
+
+
