@@ -309,4 +309,50 @@ class Repository:
         """Commit all added changes. Only for internal usage
         """
         self.repo.git.commit(author='%s <%s>' % (authorName, authorEmail), message=message)
+
+    def search_files(self, path, query, rev = None):
+
+        tree = None
+        if len(path) == 0 or path == u'/':
+            tree = self.repo.tree(rev)
+        else:
+            tree = self.repo.tree(rev)[path]
+
+        result = []
+
+        self.do_search(tree, query, result);
+
+        for attrs in result:
+            commits = self.get_commits(attrs['path'], max_count = 1, rev = rev)
+            
+            attrs['date'] = commits[0].authored_date
+            attrs['author'] = commits[0].author.name
+            attrs['summary'] = commits[0].summary
+
+        return result
+
+    def do_search(self, tree, query, results):
+        
+        for directory in tree.trees:
+            if directory.name.startswith(query):
+                attrs = {}
+                attrs['path'] = directory.path#.split('/')[-1]
+                attrs['is_dir'] = True
+                attrs['name'] = directory.name
+                results.append(attrs)
+            self.do_search(directory, query, results)
+            
+        for blob in tree.blobs:
+            if blob.name.startswith(query):
+                attrs = {}
+                attrs['path'] = blob.path#.split('/')[-1]
+                attrs['is_dir'] = False
+                attrs['name'] = blob.name
+                results.append(attrs)
+
+
+
+
+
+
         
