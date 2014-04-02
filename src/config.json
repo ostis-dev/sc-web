@@ -3,7 +3,8 @@
 		"port": 8000
 	},
     
-    "templates": {
-        "path": "/home/denis/develop/sc-web/nodejs/templates/"
+    "sctp" : {
+        "host": "localhost",
+        "port": 55770
     }
 }
