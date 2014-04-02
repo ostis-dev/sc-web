@@ -8,6 +8,7 @@ exports.start = function(config) {
     swig.setDefaults({ loader: swig.loaders.fs(__dirname + '/../templates' )});
     
     app.get("/", view_home.process);
+    app.use(express.static(__dirname + '/../static'));
     
     app.listen(parseInt(config.get("http:port")));
     console.log("Application started");
