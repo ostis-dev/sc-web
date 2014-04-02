@@ -1,0 +1,9 @@
+{
+	"http" : {
+		"port": 8000
+	},
+    
+    "templates": {
+        "path": "/home/denis/develop/sc-web/nodejs/templates/"
+    }
+}
