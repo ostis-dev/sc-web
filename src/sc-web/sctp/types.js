@@ -1,14 +1,14 @@
-ScAddr = function(v) {
+function ScAddr(v) {
     this.value = v;
-}
+};
 
 ScAddr.prototype.compare = function(other) {
     return this.value === other.value;
-}
+};
 
 ScAddr.prototype.toString = function() {
     return this.value.toString();
-}
+};
 
 
 exports.ScAddr = ScAddr;
