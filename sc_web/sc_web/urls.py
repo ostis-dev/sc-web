@@ -10,7 +10,7 @@ urlpatterns = patterns('',
     (r'^', include('nav.urls', namespace='nav')),
     (r'^api/', include('api.urls', namespace='api')),
     (r'^accounts/', include('accounts.urls', namespace='accounts')),
-    (r'^pacman/', include('pacman.urls', namespace='pacman')),
+#    (r'^pacman/', include('pacman.urls', namespace='pacman')),
     (r'^repo/', include('repo.urls', namespace='repo')),
 
     (r'^admin/', include(admin.site.urls)),

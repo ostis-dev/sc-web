@@ -22,6 +22,7 @@ __all__ = (
     'has_unpushed_changes',
 )
 
+print 'test'
 
 def is_outdated(available_version, installed_version):
     available_version_list = available_version.split('.')

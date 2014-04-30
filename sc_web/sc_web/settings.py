@@ -121,8 +121,8 @@ INSTALLED_APPS = (
     'accounts',
     'api',
     'nav',
-    'pacman',
-    'repo',
+#    'pacman',
+#    'repo',
 
     'south',
     'djcelery',
