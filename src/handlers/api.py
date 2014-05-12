@@ -275,7 +275,7 @@ class CmdDo(base.BaseHandler):
             #print sctp_client.iterate_elements(SctpIteratorType.SCTP_ITERATOR_3F_A_A, keynode_question_initiated, 0, 0)
             
             result = { 'question': question.to_id() }
-            
+            add_history_record(self.get_argument(u'%d_' % idx, None), question.to_id())
         self.set_header("Content-Type", "application/json")
         self.finish(json.dumps(result))
         
@@ -645,3 +645,106 @@ class User(base.BaseHandler):
     
         self.set_header("Content-Type", "application/json")
         self.finish(json.dumps(result))
+
+def add_history_record(request_r, responce_r):
+    number = 0
+    sctp_client = new_sctp_client()
+    keys = Keynodes(sctp_client)
+    keynode_system_element = keys[KeynodeSysIdentifiers.system_element]
+    keynode_ui_history = keys[KeynodeSysIdentifiers.ui_history]
+    records = sctp_client.iterate_elements(
+                          SctpIteratorType.SCTP_ITERATOR_3A_A_F,
+                          ScElementType.sc_type_node | ScElementType.sc_type_const,
+                          ScElementType.sc_type_arc_pos_const_perm,
+                          keynode_ui_history)
+    if records is None:
+        print "No records"
+    else:
+        number = len(records)
+    #geneate number
+    record_addr = sctp_client.create_node(ScElementType.sc_type_node | ScElementType.sc_type_const)
+    append_to_system_elements(sctp_client, keynode_system_element, record_addr)
+    number_addr = sctp_client.create_link()
+    sctp_client.set_link_content(number_addr, str(number))
+    record_arc = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, record_addr, keynode_ui_history)
+    append_to_system_elements(sctp_client, keynode_system_element, record_arc)
+    number_arc = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, number_addr, record_arc)
+    append_to_system_elements(sctp_client, keynode_system_element, number_arc) 
+ 
+    #add request record
+
+    record_request_addr = sctp_client.create_link()   
+    sctp_client.set_link_content(record_request_addr, str(request_r))
+    rel_request_addr = sctp_client.create_link()   
+    sctp_client.set_link_content(rel_request_addr, 'Request')
+    record_req_arc = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, record_addr, record_request_addr)
+    append_to_system_elements(sctp_client, keynode_system_element, record_req_arc)
+    rel_req_arc = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, rel_request_addr, record_req_arc)
+    append_to_system_elements(sctp_client, keynode_system_element, rel_req_arc)
+    
+    #add responce record
+
+    record_responce_addr = sctp_client.create_link()   
+    sctp_client.set_link_content(record_responce_addr, str(responce_r))
+    rel_responce_addr = sctp_client.create_link()   
+    sctp_client.set_link_content(rel_responce_addr, 'Responce')
+    record_res_arc = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, record_addr, record_responce_addr)
+    append_to_system_elements(sctp_client, keynode_system_element, record_res_arc)
+    rel_res_arc = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, rel_responce_addr, record_res_arc)
+    append_to_system_elements(sctp_client, keynode_system_element, rel_res_arc)
+
+    return None
+
+class InfoHistory(base.BaseHandler):
+    
+    @tornado.web.asynchronous
+    def post(self):
+    result = {}
+    res = []
+    num = 0
+    role = '{}'
+    request_list = []
+    sctp_client = new_sctp_client()
+    keys = Keynodes(sctp_client)
+    keynode_system_element = keys[KeynodeSysIdentifiers.system_element]
+    keynode_ui_history = keys[KeynodeSysIdentifiers.ui_history]
+    records = sctp_client.iterate_elements(
+                          SctpIteratorType.SCTP_ITERATOR_3A_A_F,
+                          ScElementType.sc_type_node | ScElementType.sc_type_const,
+                          ScElementType.sc_type_arc_pos_const_perm,
+                          keynode_ui_history)
+    if records is not None:
+        for item1 in records:
+            numbers = sctp_client.iterate_elements(
+                          SctpIteratorType.SCTP_ITERATOR_3A_A_F,
+                          ScElementType.sc_type_link,
+                          ScElementType.sc_type_arc_pos_const_perm,
+                          item1[1])
+            if numbers is not None:
+                for item3 in numbers:
+                    num = int(sctp_client.get_link_content(item3[0]))
+                           
+            record = sctp_client.iterate_elements(
+                          SctpIteratorType.SCTP_ITERATOR_5_F_A_A_A_A,
+                          item1[0],
+                          ScElementType.sc_type_arc_pos_const_perm,
+                          ScElementType.sc_type_link,
+                          ScElementType.sc_type_arc_pos_const_perm,
+                          ScElementType.sc_type_link ) 
+            if record is not None:
+                print "/--------------------------/"
+                record_list = ['{}','{}']
+                for item2 in record:
+                   
+                    role = sctp_client.get_link_content(item2[4])
+                    if role == 'Request':
+                        rq = 'Request :' +sctp_client.get_link_content(item2[2])
+                        print rq
+                        record_list[0] = sctp_client.get_link_content(item2[2]) 
+                    if role == 'Responce':
+                        rs = 'Responce :' +sctp_client.get_link_content(item2[2])
+                        print rs
+                        record_list[1] = sctp_client.get_link_content(item2[2]) 
+                res.append(record_list)
+   self.set_header("Content-Type", "application/json")
+self.finish(json.dumps(res))
