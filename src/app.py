@@ -40,7 +40,7 @@ def main():
             
             (r"/api/languages/", api.Languages),
             (r"/api/languages/set/", api.LanguageSet),
-            
+            (r"/api/info/history/", api.InfoHistory),
             (r"/api/idtf/find/", api.IdtfFind),
             (r"/api/idtf/resolve/", api.IdtfResolve),
             

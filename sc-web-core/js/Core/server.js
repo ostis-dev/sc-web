@@ -358,7 +358,16 @@ SCWeb.core.Server = {
                 error: error
             });
     },
-    
+     /**
+     * Returns list of history records
+     */
+    getHistory: function(callback) {
+        this._push_task({
+            url: "api/info/history/",
+            type: "POST",
+            success: callback
+        });
+    },
     /**
      * Returns list of available natural languages
      */
