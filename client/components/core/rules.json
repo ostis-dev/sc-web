@@ -1,0 +1,10 @@
+{
+	"styles": [
+		"main.css"
+	],
+	"scripts": [
+
+	],
+	"template": "core_tmpl.html",
+	"output": "sui.html"
+}

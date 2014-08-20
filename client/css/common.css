@@ -1,0 +1,39 @@
+html, body {
+    margin-top: 30px;
+    margin-bottom: 45px;
+}
+
+html.drag {
+    cursor: move;
+}
+
+#sc-ui-preloader {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: #50CF77;
+    opacity: 0.8;
+    display: block;
+}
+
+.sc-ui-preloader-anim {
+    width: 64px;
+    height: 64px;
+    margin: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+
+
+#sc-ui-locker-text {
+    font-size: 14px;
+    color: #000;
+    position:fixed;
+    margin-top: 90px;
+    margin-left: 23px;
+}

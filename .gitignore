@@ -40,5 +40,5 @@ settings_local.py
 .DS_Store
 *db
 sc-web-core.js
-sc_web/media/
-sc_web/secret.txt
+src/secret.txt
+bower_components

@@ -1,0 +1,9 @@
+{
+	"styles": [
+		"main.css"
+	],
+	"scripts": [
+	],
+	"template": "menu_tmpl.html",
+	"output": "menu.html"
+}

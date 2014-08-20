@@ -1,0 +1,17 @@
+{
+  "name": "sui",
+  "version": "0.1.0",
+  "authors": [
+    "Denis Koronchik <denis.koronchik@gmail.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "bower_components"
+  ],
+  "main": "sui.html"
+  "dependencies": {
+    "jquery": "~2.1.1",
+    "menu-bar-menu": "arodic/menu-bar-menu#master"
+  }
+}
