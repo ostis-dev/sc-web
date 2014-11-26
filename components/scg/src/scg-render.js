@@ -14,7 +14,7 @@ SCg.Render.prototype = {
             .append("svg:svg")
             .attr("pointer-events", "all")
             .attr("width", "100%")
-            .attr("height", "100%");
+            .attr("height", "auto");
         
         d3.select('#' + this.containerId);//.attr('style', 'display: block');
         
