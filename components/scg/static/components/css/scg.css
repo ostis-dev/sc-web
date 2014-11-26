@@ -255,7 +255,8 @@ path.SCgBusPath {
 
 /* ------------- User interface -------------- */
 .scg-tools-panel {
-    position: absolute; 
+    position: relative;
+    float: left;
 }
 
 .scg-type-list {
@@ -263,6 +264,9 @@ path.SCgBusPath {
     overflow-y: scroll;
 }
 
+.scg-tools-view {
+    display: flex;
+}
 .tt-dropdown-menu {
 
 }
