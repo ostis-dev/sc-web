@@ -4,6 +4,7 @@ import tornado.options
 import secret
 
 from handlers.main import MainHandler
+from handlers.statistic import StatisticHandler
 import handlers.api as api
 import ws
 
@@ -44,9 +45,10 @@ def main():
 
     rules = [
             (r"/", MainHandler),
-
             (r"/static/(.*)", NoCacheStaticHandler, {"path": tornado.options.options.static_path}),
 
+            (r"/stat", StatisticHandler),
+            (r"/stat/data", api.GetStatistics),
             # api
             (r"/api/init/", api.Init),
             (r"/api/cmd/do/", api.CmdDo),

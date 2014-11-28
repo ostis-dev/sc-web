@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="keywords" content="" />
+    <meta name="description" content="" />
+    {% block extrameta %}{% end %}
+    <title>{% block title %}Statistics{% end %}</title>
+
+    <link rel="stylesheet" type="text/css" href="{{ static_url("common/bootstrap/css/bootstrap.min.css") }}" />
+
+    {% block extrastyles %}
+    <link rel="stylesheet" type="text/css" href="{{ static_url("common/bootstrap/css/datepicker.css") }}" />
+    {% end %}
+
+    {% block extrapluginscripts %}
+    <script type="text/javascript" charset="utf-8" src="{{ static_url("common/jquery/jquery-1.8.3.js") }}"></script>
+    <script type="text/javascript" charset="utf-8" src="{{ static_url("common/jquery/jquery.namespace.js") }}"></script>
+    <script type="text/javascript" charset="utf-8" src="{{ static_url("common/bootstrap/js/bootstrap.min.js") }}"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript" charset="utf-8" src="{{ static_url("common/bootstrap/js/bootstrap-datepicker.js") }}"></script>
+    {% end %}
+
+    {% block extrascripts %}
+    <script type="text/javascript" charset="utf-8" src="{{ static_url("components/js/sc-web-core.js") }}"></script>
+    <script type="text/javascript" charset="utf-8" src="{{ static_url("components/js/sc-web-statistic.js") }}"></script>
+    {% end %}
+</head>
+
+{% block body %}
+<body id="stat">
+
+        <div class="well" style="overflow: auto;">
+            <div class="pull-left">
+                From:
+                <input type="text" class="span2" style="margin: auto;" id="from" />
+                to:
+                <input type="text" class="span2" style="margin: auto;" id="to" />
+                <button type="button" class="btn btn btn-default" data-loading-text="Loading..." id="button_select_range">Get data</button>
+            </div>
+            <div class="pull-right">
+                Time scale:
+                <div class="btn-group" data-toggle="buttons">
+                    <button type="button" class="btn btn-default" id="hour"> <input type="radio" name="options" id="option1"> Hour</button>
+                    <button type="button" class="btn btn-default" id="day"> <input type="radio" name="options" id="option2"> Day</button>
+                    <button type="button" class="btn btn-default" id="week"> <input type="radio" name="options" id="option3">Week</button>
+                    <button type="button" class="btn btn-default" id="month"> <input type="radio" name="options" id="option4"> Month</button>
+                    <button type="button" class="btn btn-default" id="year"> <input type="radio" name="options" id="option5"> Year</button>
+                </div>
+            </div>
+        </div>
+        
+        <h4 id="stat_header" style="text-align: center;"></h4>
+        
+        <div id="memory_usage" style="width: 900px; height: 500px;"></div>
+        <div id="elements_pie" style="width: 900px; height: 500px;"></div>
+        <div id="server_usage" style="width: 900px; height: 500px;"></div>
+
+    
+    <div class="sc-cursor-icon hidden">SC</div>
+</body>
+{% end %}
+</html>
