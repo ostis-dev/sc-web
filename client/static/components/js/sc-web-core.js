@@ -1577,6 +1577,7 @@ SCWeb.ui.WindowManager = {
     sandboxes: {},
     active_window_id: null,
     active_history_addr: null,
+    window_container_indent: 130,
     
     
     // function to create hash from question addr and format addr
@@ -1593,6 +1594,7 @@ SCWeb.ui.WindowManager = {
         
         this.window_container_id = '#window-container';
         this.window_container = $(this.window_container_id);
+        this.window_container.css('height', window.innerHeight - this.window_container_indent);
         
         var self = this;
         

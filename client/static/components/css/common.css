@@ -134,6 +134,7 @@ html.drag {
 /* --- window --- */
 .sc-window {
     height: 100%;
+    overflow: auto;
 }
 
 .sc-window .panel-body {
