@@ -54,6 +54,7 @@ html.drag {
 
 #window-container {
     height: 100%;
+    overflow: auto;
 }
 
 .hidden {
