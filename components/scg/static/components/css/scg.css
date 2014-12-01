@@ -90,12 +90,10 @@
 }
 
 .SCgEdgeEndArrowAccess {
-    marker-end: url(#end-arrow-access);
     fill: none;
 }
 
 .SCgEdgeEndArrowCommon {
-    marker-end: url(#end-arrow-common);
     fill: none;
 }
 
