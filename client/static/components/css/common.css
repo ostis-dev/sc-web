@@ -52,10 +52,6 @@ html.drag {
     width: 100%;
 }
 
-#window-container {
-    height: 100%;
-}
-
 .hidden {
     visibility: hidden;
 }
@@ -134,6 +130,7 @@ html.drag {
 /* --- window --- */
 .sc-window {
     height: 100%;
+    overflow: auto;
 }
 
 .sc-window .panel-body {
