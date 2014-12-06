@@ -1,3 +1,43 @@
+@font-face {
+    font-family: ArialServ;
+    src: url(../fonts/arial.ttf);
+}
+@font-face {
+    font-family: ArialServ;
+    src: url(../fonts/arialbd.ttf);
+    font-weight: bold;
+}
+@font-face {
+    font-family: ArialServ;
+    src: url(../fonts/arialbi.ttf);
+    font-weight: bold;
+    font-style: italic;
+}
+@font-face {
+    font-family: ArialServ;
+    src: url(../fonts/ariali.ttf);
+    font-style: italic;
+}
+@font-face {
+    font-family: TNRServ;
+    src: url(../fonts/times.ttf);
+}
+@font-face {
+    font-family: TNRServ;
+    src: url(../fonts/timesbd.ttf);
+    font-weight: bold;
+}
+@font-face {
+    font-family: TNRServ;
+    src: url(../fonts/timesbi.ttf);
+    font-weight: bold;
+    font-style: italic;
+}
+@font-face {
+    font-family: TNRServ;
+    src: url(../fonts/timesi.ttf);
+    font-style: italic;
+}
 .scs-container {
     border: solid 1px #cccccc;
     background-color: #f8f8f9;
@@ -84,12 +124,12 @@
     float: left;
     margin-top: -2px;
     vertical-align: text-top;
-    font-family: "Unicode Symbols", "Times New Roman", "Apple Symbols","Arial Unicode MS";
+    font-family: /*"Unicode Symbols", */"TNRServ", /*"Apple Symbols",*/"ArialServ";
     color: #2a6496;
 }
 
 .scs-scn-connector {
-    font-family: "Unicode Symbols", "Times New Roman", "Apple Symbols","Arial Unicode MS";
+    font-family: /*"Unicode Symbols", */"TNRServ", /*"Apple Symbols",*/"ArialServ";
     color: #2a6496;
 }
 
