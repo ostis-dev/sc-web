@@ -174,7 +174,7 @@ SCWeb.ui.WindowManager = {
             var id = self.hash_addr(question_addr, fmt_addr);
             var window_id = 'window_' + question_addr;
             var window_html =   '<div class="panel panel-default sc-window" id="' + id + '" sc_addr="' + question_addr + '" sc-addr-fmt="' + fmt_addr + '">' +
-                                    '<div class="panel-body" id="' + window_id + '"></div>'
+                                    '<div class="panel-body scg-tools-view" id="' + window_id + '"></div>'
                                 '</div>';
             self.window_container.prepend(window_html);
 

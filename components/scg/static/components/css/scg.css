@@ -231,7 +231,12 @@ path.SCgBusPath {
 
 /* ------------- User interface -------------- */
 .scg-tools-panel {
-    position: absolute;
+    position: relative;
+    float: left;
+}
+
+.scg-tools-view {
+    display: flex;
 }
 
 .scg-type-list {
@@ -282,3 +287,4 @@ path.SCgBusPath {
 .tt-dropdown-menu .tt-dataset-idtf .tt-suggestion:hover {
     background-color: #428bca !important;
 }
+
