@@ -92,6 +92,7 @@ class CmdDo(base.BaseHandler):
                 if sctp_client.check_element(arg):
                     arguments.append(arg)
                 else:
+                    sctp_client.shutdown()
                     return serialize_error(404, "Invalid argument: %s" % arg)
 
             first = False
@@ -141,10 +142,12 @@ class CmdDo(base.BaseHandler):
                 arg_arc = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, args_addr, arg)
                 logic.append_to_system_elements(sctp_client, keynode_system_element, arg_arc)
                 if arg_arc is None:
+                    sctp_client.shutdown()
                     return serialize_error(self, 404, 'Error while create "create_instance" command')
 
                 idx_addr = sctp_client.find_element_by_system_identifier(str(u'rrel_%d' % idx))
                 if idx_addr is None:
+                    sctp_client.shutdown()
                     return serialize_error(self, 404, 'Error while create "create_instance" command')
                 idx += 1
                 arc = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, idx_addr, arg_arc)
@@ -162,6 +165,7 @@ class CmdDo(base.BaseHandler):
                 time.sleep(wait_dt)
                 wait_time += wait_dt
                 if wait_time > tornado.options.options.event_wait_timeout:
+                    sctp_client.shutdown()
                     return serialize_error(self, 404, 'Timeout waiting for "create_instance" command finished')
                 cmd_finished = logic.check_command_finished(inst_cmd_addr, keynode_ui_command_finished, sctp_client)
 
@@ -176,6 +180,7 @@ class CmdDo(base.BaseHandler):
                 keynode_ui_nrel_command_result
             )
             if cmd_result is None:
+                sctp_client.shutdown()
                 return serialize_error(self, 404, 'Can\'t find "create_instance" command result')
 
             cmd_result = cmd_result[0][2]
@@ -191,6 +196,7 @@ class CmdDo(base.BaseHandler):
                 cmd_result
             )
             if question is None:
+                sctp_client.shutdown()
                 return serialize_error(self, 404, "Can't find question node")
 
             question = question[0][2]
@@ -258,6 +264,7 @@ class CmdDo(base.BaseHandler):
             sc_session = logic.ScSession(self, sctp_client, keys)
             user_node = sc_session.get_sc_addr()
             if not user_node:
+                sctp_client.shutdown()
                 return serialize_error(self, 404, "Can't resolve user node")
             
             arc = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, keynode_ui_user, user_node)
@@ -307,11 +314,13 @@ class QuestionAnswerTranslate(base.BaseHandler):
             time.sleep(wait_dt)
             wait_time += wait_dt
             if wait_time > tornado.options.options.event_wait_timeout:
+                sctp_client.shutdown()
                 return serialize_error(self, 404, 'Timeout waiting for answer')
             
             answer = logic.find_answer(question_addr, keynode_nrel_answer, sctp_client)
         
         if answer is None:
+            sctp_client.shutdown()
             return serialize_error(self, 404, 'Answer not found')
         
         answer_addr = answer[0][2]
@@ -351,6 +360,7 @@ class QuestionAnswerTranslate(base.BaseHandler):
                 time.sleep(wait_dt)
                 wait_time += wait_dt
                 if wait_time > tornado.options.options.event_wait_timeout:
+                    sctp_client.shutdown()
                     return serialize_error(self, 404, 'Timeout waiting for answer translation')
  
                 translation = logic.find_translation_with_format(answer_addr, format_addr, keynode_nrel_format, keynode_nrel_translation, sctp_client)
@@ -381,10 +391,12 @@ class LinkContent(base.BaseHandler):
         # parse arguments
         addr = ScAddr.parse_from_string(self.get_argument('addr', None))
         if addr is None:
+            sctp_client.shutdown()
             return serialize_error(self, 404, 'Invalid arguments')
     
         result = sctp_client.get_link_content(addr)
         if result is None:
+            sctp_client.shutdown()
             return serialize_error(self, 404, 'Content not found')
     
         sctp_client.shutdown()
@@ -533,10 +545,11 @@ class IdtfFind(base.BaseHandler):
         result[keynode_nrel_system_identifier.to_id()] = sys
         result[keynode_nrel_main_idtf.to_id()] = main
         result[keynode_nrel_idtf.to_id()] = common
+
         sctp_client.shutdown()
         self.set_header("Content-Type", "application/json")
         self.finish(json.dumps(result))
-        
+
 class IdtfResolve(base.BaseHandler):
     
     @tornado.web.asynchronous
