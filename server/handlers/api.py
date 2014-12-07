@@ -65,7 +65,7 @@ class Init(base.BaseHandler):
                             'default_ext_lang': sc_session.get_default_ext_lang().to_id()
                            }
         }
-    
+
         sctp_client.shutdown()
         self.set_header("Content-Type", "application/json")
         self.finish(json.dumps(result))
@@ -533,7 +533,6 @@ class IdtfFind(base.BaseHandler):
         result[keynode_nrel_system_identifier.to_id()] = sys
         result[keynode_nrel_main_idtf.to_id()] = main
         result[keynode_nrel_idtf.to_id()] = common
-
         sctp_client.shutdown()
         self.set_header("Content-Type", "application/json")
         self.finish(json.dumps(result))
