@@ -1,0 +1,83 @@
+.geometryEditor {
+    width: 100%;
+    height: 100%;
+}
+
+.geometryEditor .toolbar {
+    width: 10%;
+    height: 100%;
+    max-width: 80px;
+    float: left;
+}
+
+.geometryEditor .toolbar .button {
+    width: 50px;
+    height: 50px;
+    margin: 0 auto 15px;
+    cursor: pointer;
+    border-radius: 5px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.2);
+}
+
+.geometryEditor .toolbar .button:hover {
+    box-shadow: 0 3px 6px rgba(0,0,0,.3);
+}
+
+.geometryEditor .toolbar .button:active {
+    position: relative;
+    top: 1px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.2);
+}
+
+.geometryEditor .toolbar .button.point {
+    background: url("../images/drawings/point.png") no-repeat;
+    background-size: cover;
+}
+
+.geometryEditor .toolbar .button.line {
+    background: url("../images/drawings/line.png") no-repeat;
+    background-size: cover;
+}
+
+.geometryEditor .toolbar .button.segment {
+    background: url("../images/drawings/segment.png") no-repeat;
+    background-size: cover;
+}
+
+.geometryEditor .toolbar .button.triangle {
+    background: url("../images/drawings/triangle.png") no-repeat;
+    background-size: cover;
+}
+
+.geometryEditor .toolbar .button.circle {
+    background: url("../images/drawings/circle.jpg") no-repeat;
+    background-size: cover;
+}
+
+.geometryEditor .toolbar .button.clear {
+    background: url("../images/drawings/clear.gif") no-repeat;
+    background-size: cover;
+}
+
+.geometryEditor .toolbar .button.save {
+    background: url("../images/drawings/save.jpg") no-repeat;
+    background-size: cover;
+}
+
+.geometryEditor .toolbar .button.load {
+    background: url("../images/drawings/load.jpg") no-repeat;
+    background-size: cover;
+}
+
+.geometryEditor .toolbar .button.edit {
+    background: url("../images/drawings/edit_properties.jpg") no-repeat;
+    background-size: cover;
+}
+
+.geometryEditor .board {
+    width: 90%;
+    height: 100%;
+}
+#fileInput {
+    display: none;
+}
