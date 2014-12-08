@@ -491,7 +491,7 @@ class IdtfFind(base.BaseHandler):
     
         # get arguments
         substr = self.get_argument('substr', None)
-        substrLen = len(substr)
+        substrLen = float(len(substr))
         # connect to redis an try to find identifiers
         r = redis.StrictRedis(host = tornado.options.options.redis_host, 
                               port = tornado.options.options.redis_port,
@@ -522,13 +522,13 @@ class IdtfFind(base.BaseHandler):
                     # get text
                     text = utf[9:]
                     # create list: [idtf, autocomplete text, value comparison criterion]
-                    sys.append([addr.to_id(), text, substrLen/len(text)])
+                    sys.append([addr.to_id(), text, float(substrLen)/float(len(text))])
                 elif utf.startswith(u"idtf:main:") and len(main) < max_n:
                     text = utf[1:]
-                    main.append([addr.to_id(), text, substrLen/len(text)])
+                    main.append([addr.to_id(), text, float(substrLen)/float(len(text))])
                 elif utf.startswith(u"idtf:common:") and len(common) < max_n:
                     text = utf[9:]
-                    common.append([addr.to_id(), text, substrLen/len(text)])
+                    common.append([addr.to_id(), text, float(substrLen)/float(len(text))])
         # sort lists by third element(value comparison criterion) and exclude it from list
         sys = [[item[0], item[1]] for item in sorted(sys, key=lambda x: x[2])]
         main = [[item[0], item[1]] for item in sorted(main, key=lambda x: x[2])]
