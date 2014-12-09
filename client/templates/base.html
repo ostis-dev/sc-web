@@ -128,6 +128,10 @@
                     <!-- Buttons will be inserted on arguments append -->
                 </div>
             </div>
+            <div class="version">SC Web Version:
+                        {% if 'version' in globals() %}{{version.get('sc_web', 'Unknown')}}{%else%}Unknown{%end%}</div>
+            <div class="version">SC Web Core Version:
+                {% if 'version' in globals() %}{{version.get('sc_web_core', 'Unknown')}}{%else%}Unknown{%end%}</div>
             <span class="copyright">Copyright © 2012 - 2014 <a href="#">OSTIS</a> </span>
         </div>
     </div>

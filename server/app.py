@@ -32,7 +32,7 @@ def main():
     tornado.options.define("redis_port", default = 6379, help = "port of redis server", type = int)
     tornado.options.define("redis_db_idtf", default = 0, help = "number of redis database to store identifiers", type = int)
     tornado.options.define("redis_db_user", default = 1, help = "number of redis database to store user info", type = int)
-    
+
     tornado.options.parse_command_line()
     tornado.options.parse_config_file("server.conf")
     
