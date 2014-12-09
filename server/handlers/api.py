@@ -10,6 +10,7 @@ from sctp.types import ScAddr, SctpIteratorType, ScElementType
 import api_logic as logic
 import time
 import base
+from googleAnalitics.ga import track_event
 
 ## Стандартный класс обработки REST-запросов.
 class DefaultHandler(base.BaseHandler):
@@ -32,6 +33,7 @@ class DefaultHandler(base.BaseHandler):
         self.set_header("Content-Type", content_type)
         self.finish(result)
         self.stop_sctp_client()
+        self.send_google_analytics(200)
 
     ## Функция возвращающая ошибку сессии
     # @note после отправки ошибки сессии закрывает sctp клиент
@@ -44,6 +46,21 @@ class DefaultHandler(base.BaseHandler):
         self.set_status(code)
         self.finish(message)
         self.stop_sctp_client()
+        self.send_google_analytics(code)
+
+    ## Метод отправки данных в google analytics
+    # @param response_code ответ сервера на запрос
+    def send_google_analytics(self, response_code):
+        try:
+            method = self.request.method
+            path = self.request.uri
+        except AttributeError:
+            method = 'unknown'
+            path = '/errorPath'
+        ## отправим в google analytics информацию о запросе и номер ответа на него
+        track_event(domain='none', account='UA-57454857-1', path=path, category='Tornado Server SCgWeb', action=method,
+                    value=response_code)
+
 
 class Init(DefaultHandler):
     @tornado.web.asynchronous
