@@ -538,7 +538,9 @@ SCg.Scene.prototype = {
      * @param {SCgEditMode} mode New edit mode
      */
     setEditMode: function(mode) {
-        
+
+        var startTime = new Date().getTime();
+
         if (this.edit_mode == mode) return; // do nothing
         
         this.edit_mode = mode;
@@ -549,14 +551,31 @@ SCg.Scene.prototype = {
         this.bus_data.source = null;
         
         this.resetEdgeMode();
+
+        var endTime = new Date().getTime();
+
+        GoogleAnalytics.trackTiming(
+                endTime - startTime,
+                GoogleAnalytics.TIME_CATEGORY.CLICK,
+                GoogleAnalytics.TIME_ACTION.CHANGE_EDIT_MODE
+        );
     },
     
     /** 
      * Changes modal state of scene. Just for internal usage
      */
     setModal: function(value) {
+        var startTime = new Date().getTime();
+
         this.modal = value;
         this._fireModalChanged();
+        var endTime = new Date().getTime();
+
+        GoogleAnalytics.trackTiming(
+                endTime - startTime,
+                GoogleAnalytics.TIME_CATEGORY.CLICK,
+                GoogleAnalytics.TIME_ACTION.CHANGE_MODAL_MODE
+        );
     },
     
     /**
