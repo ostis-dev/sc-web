@@ -257,12 +257,19 @@ html.drag {
 /* --- drag --- */
 .drag-value {
     background-color: #ddd;
-    display: display: inline-block !important;
+    display: inline-block !important;
     max-width: 250px !important;
     max-height: 200px !important;
     border: 1px dotted #999;
     padding: 3px;
     z-index: 1000;
+}
+
+.version {
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 10px;
+    font-style: italic;
 }
 
 .copyright {
