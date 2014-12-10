@@ -257,7 +257,7 @@ html.drag {
 /* --- drag --- */
 .drag-value {
     background-color: #ddd;
-    display: inline-block !important;
+    display: display: inline-block !important;
     max-width: 250px !important;
     max-height: 200px !important;
     border: 1px dotted #999;

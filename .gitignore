@@ -46,16 +46,16 @@ sc_web/secret.txt
 server/secret.txt
 
 # components
-# components/*/static/components/js/*
+components/*/static/components/js/*
 
 # scg
-# client/static/components/*/scg*
+client/static/components/*/scg*
 
 # github
-# client/static/components/*/github*
+client/static/components/*/github*
 
 # scs
-# client/static/components/*/scs*
+client/static/components/*/scs*
 
 # html
-# client/static/components/*/html*
+client/static/components/*/html*
