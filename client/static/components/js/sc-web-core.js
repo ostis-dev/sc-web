@@ -1117,7 +1117,7 @@ SCWeb.core.Server = {
         });
     },
 
-    /** 
+    /**
      * Request identifiers that contains specified substring
      * @param str Substring to find
      */
@@ -1496,6 +1496,16 @@ SCWeb.ui.SearchPanel = {
             }
         ).bind('typeahead:selected', function(evt, item, dataset) {
             if (item && item.addr) {
+
+                // send search text to Google Analytics
+                if (item.name) {
+                    GoogleAnalytics.trackEvent(
+                        GoogleAnalytics.EVENT_CATEGORY.SEARCH,
+                        GoogleAnalytics.EVENT_ACTION.SEARCH_CLICK,
+                        item.name
+                    );
+                }
+
                 SCWeb.core.Main.doDefaultCommand([item.addr]);
             }
             evt.stopPropagation();
@@ -1604,11 +1614,16 @@ SCWeb.ui.WindowManager = {
         }
         $('#history-item-langs').html(ext_langs_items).find('[sc_addr]').click(function(event) {
 
+            GoogleAnalytics.trackEvent(
+                GoogleAnalytics.EVENT_CATEGORY.SC_LANGUAGE,
+                GoogleAnalytics.EVENT_ACTION.SC_LANGUAGE_CLICK
+            );
+
             if (SCWeb.ui.ArgumentsPanel.isArgumentAddState()) return;
 
             var question_addr = self.active_history_addr;
             var lang_addr = $(this).attr('sc_addr');
-        
+
             var fmt_addr = SCWeb.core.ComponentManager.getPrimaryFormatForExtLang(lang_addr);
             if (fmt_addr) {
                 var id = self.hash_addr(question_addr, fmt_addr);
@@ -1623,6 +1638,12 @@ SCWeb.ui.WindowManager = {
         });
     
         $('#history-item-print').click(function () {
+
+            GoogleAnalytics.trackEvent(
+                GoogleAnalytics.EVENT_CATEGORY.PRINT_WINDOW,
+                GoogleAnalytics.EVENT_ACTION.PRINT_WINDOW_CLICK
+            );
+
             if (SCWeb.ui.ArgumentsPanel.isArgumentAddState()) return;
 
             // get ctive window data
@@ -2132,6 +2153,14 @@ SCWeb.ui.Menu = {
                 
         $('.menu-item').click(function() {
             var sc_addr = $(this).attr('sc_addr');
+
+            GoogleAnalytics.trackEvent(
+                GoogleAnalytics.EVENT_CATEGORY.MENU,
+                GoogleAnalytics.EVENT_ACTION.MENU_ITEM_CLICK,
+                sc_addr
+            );
+
+
             if ($(this).hasClass('menu-cmd-atom')) {
                 SCWeb.core.Main.doCommand(sc_addr, SCWeb.core.Arguments._arguments);
             } else if ($(this).hasClass('menu-cmd-keynode')) {
