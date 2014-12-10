@@ -50,7 +50,18 @@ SCWeb.ui.SearchPanel = {
                 }
             }
         ).bind('typeahead:selected', function(evt, item, dataset) {
+
             if (item && item.addr) {
+
+                // send search text to Google Analytics
+                if (item.name) {
+                    GoogleAnalytics.trackEvent(
+                        GoogleAnalytics.EVENT_CATEGORY.SEARCH,
+                        GoogleAnalytics.EVENT_ACTION.SEARCH_CLICK,
+                        item.name
+                    );
+                }
+
                 SCWeb.core.Main.doDefaultCommand([item.addr]);
             }
             evt.stopPropagation();
