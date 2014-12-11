@@ -34,6 +34,11 @@ SCWeb.ui.WindowManager = {
         }
         $('#history-item-langs').html(ext_langs_items).find('[sc_addr]').click(function(event) {
 
+            GoogleAnalytics.trackEvent(
+                GoogleAnalytics.EVENT_CATEGORY.SC_LANGUAGE,
+                GoogleAnalytics.EVENT_ACTION.SC_LANGUAGE_CLICK
+            );
+
             if (SCWeb.ui.ArgumentsPanel.isArgumentAddState()) return;
 
             var question_addr = self.active_history_addr;
@@ -53,6 +58,12 @@ SCWeb.ui.WindowManager = {
         });
     
         $('#history-item-print').click(function () {
+
+            GoogleAnalytics.trackEvent(
+                GoogleAnalytics.EVENT_CATEGORY.PRINT_WINDOW,
+                GoogleAnalytics.EVENT_ACTION.PRINT_WINDOW_CLICK
+            );
+
             if (SCWeb.ui.ArgumentsPanel.isArgumentAddState()) return;
 
             // get ctive window data
