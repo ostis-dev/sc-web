@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import tornado.web
 import json
 import redis
@@ -9,32 +10,75 @@ from sctp.types import ScAddr, SctpIteratorType, ScElementType
 import api_logic as logic
 import time
 import base
+from googleAnalitics.ga import track_event
+
+## Стандартный класс обработки REST-запросов.
+class DefaultHandler(base.BaseHandler):
+
+    ## Метод создания sctp клиента
+    def start_sctp_client(self):
+        self.sctpClient = new_sctp_client()
+
+    ## Метод закрытия sctp клиента
+    def stop_sctp_client(self):
+        self.sctpClient.shutdown()
+
+    ## Функция возвращающая ответ сессии
+    # @note после отправки ответа сессии закрывает sctp клиент
+    # @param content_type тип ответа
+    # @pararm result ответ
+    # @param *args дополнительные аргументы
+    # @parama **kwargs дополнительные именованные аргументы
+    def serialize(self, content_type, result=None, *args, **kwargs):
+        self.set_header("Content-Type", content_type)
+        self.finish(result)
+        self.stop_sctp_client()
+        self.send_google_analytics(200)
+
+    ## Функция возвращающая ошибку сессии
+    # @note после отправки ошибки сессии закрывает sctp клиент
+    # @param code код ошибки
+    # @pararm message сообщение об ошибке
+    # @param *args дополнительные аргументы
+    # @parama **kwargs дополнительные именованные аргументы
+    def serialize_error(self, code, message, *args, **kwargs):
+        self.clear()
+        self.set_status(code)
+        self.finish(message)
+        self.stop_sctp_client()
+        self.send_google_analytics(code)
+
+    ## Метод отправки данных в google analytics
+    # @param response_code ответ сервера на запрос
+    def send_google_analytics(self, response_code):
+        try:
+            method = self.request.method
+            path = self.request.uri
+        except AttributeError:
+            method = 'unknown'
+            path = '/errorPath'
+        ## отправим в google analytics информацию о запросе и номер ответа на него
+        track_event(domain='none', account='UA-57454857-1', path=path, category='Tornado Server SCgWeb', action=method,
+                    value=response_code)
 
 
-def serialize_error(handler, code, message):
-        handler.clear()
-        handler.set_status(code)
-        handler.finish(message)
-# -------------------------------------------        
-
-class Init(base.BaseHandler):
+class Init(DefaultHandler):
     @tornado.web.asynchronous
     def get(self):
+        self.start_sctp_client()
         result = '{}'
-    
-        sctp_client = new_sctp_client()
-        keys = Keynodes(sctp_client)
+        keys = Keynodes(self.sctpClient)
         keynode_ui_main_menu = keys[KeynodeSysIdentifiers.ui_main_menu]
         keynode_ui_external_languages = keys[KeynodeSysIdentifiers.ui_external_languages]
         keynode_languages = keys[KeynodeSysIdentifiers.languages]
 
         # try to find main menu node
-        cmds = logic.parse_menu_command(keynode_ui_main_menu, sctp_client, keys)
+        cmds = logic.parse_menu_command(keynode_ui_main_menu, self.sctpClient, keys)
         if cmds is None:
             cmds = {}
 
         # try to find available output languages
-        res_out_langs = sctp_client.iterate_elements(
+        res_out_langs = self.sctpClient.iterate_elements(
             SctpIteratorType.SCTP_ITERATOR_3F_A_A,
             keynode_ui_external_languages,
             ScElementType.sc_type_arc_pos_const_perm,
@@ -47,13 +91,13 @@ class Init(base.BaseHandler):
                 out_langs.append(items[2].to_id())
 
         # try to find available output natural languages
-        langs = logic.get_languages_list(keynode_languages, sctp_client)
+        langs = logic.get_languages_list(keynode_languages, self.sctpClient)
         langs_str = []
         for l in langs:
             langs_str.append(l.to_id())
         
         # get user sc-addr
-        sc_session = logic.ScSession(self, sctp_client, keys)
+        sc_session = logic.ScSession(self, self.sctpClient, keys)
         user_addr = sc_session.get_sc_addr()
         result = {'menu_commands': cmds,
                   'languages': langs_str,
@@ -65,19 +109,14 @@ class Init(base.BaseHandler):
                             'default_ext_lang': sc_session.get_default_ext_lang().to_id()
                            }
         }
-    
-        sctp_client.shutdown()
-        self.set_header("Content-Type", "application/json")
-        self.finish(json.dumps(result))
+        self.serialize("application/json", json.dumps(result))
         
-        
-        
-class CmdDo(base.BaseHandler):
+class CmdDo(DefaultHandler):
     
     @tornado.web.asynchronous
     def post(self):
+        self.start_sctp_client()
         result = '[]'
-        sctp_client = new_sctp_client()
 
         cmd_addr = ScAddr.parse_from_string(self.get_argument(u'cmd', None))
         # parse arguments
@@ -88,18 +127,17 @@ class CmdDo(base.BaseHandler):
         while first or (arg is not None):
             arg = ScAddr.parse_from_string(self.get_argument(u'%d_' % idx, None))
             if arg is not None:
-                # check if sc-element exist
-                if sctp_client.check_element(arg):
+                if self.sctpClient.check_element(arg):
                     arguments.append(arg)
                 else:
-                    return serialize_error(404, "Invalid argument: %s" % arg)
+                    return self.serialize_error(404, "Invalid argument: %s" % arg)
 
             first = False
             idx += 1
 
         if (len(arguments) > 0) and (cmd_addr is not None):
 
-            keys = Keynodes(sctp_client)
+            keys = Keynodes(self.sctpClient)
 
             keynode_ui_rrel_commnad = keys[KeynodeSysIdentifiers.ui_rrel_commnad]
             keynode_ui_rrel_command_arguments = keys[KeynodeSysIdentifiers.ui_rrel_command_arguments]
@@ -118,56 +156,59 @@ class CmdDo(base.BaseHandler):
             keynode_nrel_main_idtf = keys[KeynodeSysIdentifiers.nrel_main_idtf]
 
             # create command in sc-memory
-            inst_cmd_addr = sctp_client.create_node(ScElementType.sc_type_node | ScElementType.sc_type_const)
-            logic.append_to_system_elements(sctp_client, keynode_system_element, inst_cmd_addr)
-            arc = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, keynode_ui_command_generate_instance, inst_cmd_addr)
-            logic.append_to_system_elements(sctp_client, keynode_system_element, arc)
+            inst_cmd_addr = self.sctpClient.create_node(ScElementType.sc_type_node | ScElementType.sc_type_const)
+            logic.append_to_system_elements(self.sctpClient, keynode_system_element, inst_cmd_addr)
+            arc = self.sctpClient.create_arc(ScElementType.sc_type_arc_pos_const_perm, keynode_ui_command_generate_instance, inst_cmd_addr)
+            logic.append_to_system_elements(self.sctpClient, keynode_system_element, arc)
 
-            inst_cmd_arc = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, inst_cmd_addr, cmd_addr)
-            logic.append_to_system_elements(sctp_client, keynode_system_element, inst_cmd_arc)
-            arc = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, keynode_ui_rrel_commnad, inst_cmd_arc)
-            logic.append_to_system_elements(sctp_client, keynode_system_element, arc)
+            inst_cmd_arc = self.sctpClient.create_arc(ScElementType.sc_type_arc_pos_const_perm, inst_cmd_addr, cmd_addr)
+            logic.append_to_system_elements(self.sctpClient, keynode_system_element, inst_cmd_arc)
+            arc = self.sctpClient.create_arc(ScElementType.sc_type_arc_pos_const_perm, keynode_ui_rrel_commnad, inst_cmd_arc)
+            logic.append_to_system_elements(self.sctpClient, keynode_system_element, arc)
 
             # create arguments
-            args_addr = sctp_client.create_node(ScElementType.sc_type_node | ScElementType.sc_type_const)
-            logic.append_to_system_elements(sctp_client, keynode_system_element, args_addr)
-            args_arc = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, inst_cmd_addr, args_addr)
-            logic.append_to_system_elements(sctp_client, keynode_system_element, args_arc)
-            arc = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, keynode_ui_rrel_command_arguments, args_arc)
-            logic.append_to_system_elements(sctp_client, keynode_system_element, arc)
+            args_addr = self.sctpClient.create_node(ScElementType.sc_type_node | ScElementType.sc_type_const)
+            logic.append_to_system_elements(self.sctpClient, keynode_system_element, args_addr)
+            args_arc = self.sctpClient.create_arc(ScElementType.sc_type_arc_pos_const_perm, inst_cmd_addr, args_addr)
+            logic.append_to_system_elements(self.sctpClient, keynode_system_element, args_arc)
+            arc = self.sctpClient.create_arc(ScElementType.sc_type_arc_pos_const_perm, keynode_ui_rrel_command_arguments, args_arc)
+            logic.append_to_system_elements(self.sctpClient, keynode_system_element, arc)
 
             idx = 1
             for arg in arguments:
-                arg_arc = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, args_addr, arg)
-                logic.append_to_system_elements(sctp_client, keynode_system_element, arg_arc)
+                arg_arc = self.sctpClient.create_arc(ScElementType.sc_type_arc_pos_const_perm, args_addr, arg)
+                logic.append_to_system_elements(self.sctpClient, keynode_system_element, arg_arc)
                 if arg_arc is None:
-                    return serialize_error(self, 404, 'Error while create "create_instance" command')
+                    self.sctpClient.shutdown()
+                    return self.serialize_error(self, 404, 'Error while create "create_instance" command')
 
-                idx_addr = sctp_client.find_element_by_system_identifier(str(u'rrel_%d' % idx))
+                idx_addr = self.sctpClient.find_element_by_system_identifier(str(u'rrel_%d' % idx))
                 if idx_addr is None:
-                    return serialize_error(self, 404, 'Error while create "create_instance" command')
+                    self.sctpClient.shutdown()
+                    return self.serialize_error(self, 404, 'Error while create "create_instance" command')
                 idx += 1
-                arc = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, idx_addr, arg_arc)
-                logic.append_to_system_elements(sctp_client, keynode_system_element, arc)
+                arc = self.sctpClient.create_arc(ScElementType.sc_type_arc_pos_const_perm, idx_addr, arg_arc)
+                logic.append_to_system_elements(self.sctpClient, keynode_system_element, arc)
 
             wait_time = 0
             wait_dt = 0.1
             
             # initialize command
-            arc = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, keynode_ui_command_initiated, inst_cmd_addr)
-            logic.append_to_system_elements(sctp_client, keynode_system_element, arc)
+            arc = self.sctpClient.create_arc(ScElementType.sc_type_arc_pos_const_perm, keynode_ui_command_initiated, inst_cmd_addr)
+            logic.append_to_system_elements(self.sctpClient, keynode_system_element, arc)
 
-            cmd_finished = logic.check_command_finished(inst_cmd_addr, keynode_ui_command_finished, sctp_client)
+            cmd_finished = logic.check_command_finished(inst_cmd_addr, keynode_ui_command_finished, self.sctpClient)
             while cmd_finished is None:
                 time.sleep(wait_dt)
                 wait_time += wait_dt
                 if wait_time > tornado.options.options.event_wait_timeout:
-                    return serialize_error(self, 404, 'Timeout waiting for "create_instance" command finished')
-                cmd_finished = logic.check_command_finished(inst_cmd_addr, keynode_ui_command_finished, sctp_client)
+                    self.sctpClient.shutdown()
+                    return self.serialize_error(self, 404, 'Timeout waiting for "create_instance" command finished')
+                cmd_finished = logic.check_command_finished(inst_cmd_addr, keynode_ui_command_finished, self.sctpClient)
 
 
             # get command result
-            cmd_result = sctp_client.iterate_elements(
+            cmd_result = self.sctpClient.iterate_elements(
                 SctpIteratorType.SCTP_ITERATOR_5F_A_A_A_F,
                 inst_cmd_addr,
                 ScElementType.sc_type_arc_common | ScElementType.sc_type_const,
@@ -176,13 +217,13 @@ class CmdDo(base.BaseHandler):
                 keynode_ui_nrel_command_result
             )
             if cmd_result is None:
-                return serialize_error(self, 404, 'Can\'t find "create_instance" command result')
+                return self.serialize_error(self, 404, 'Can\'t find "create_instance" command result')
 
             cmd_result = cmd_result[0][2]
 
             # @todo support all possible commands
             # try to find question node
-            question = sctp_client.iterate_elements(
+            question = self.sctpClient.iterate_elements(
                 SctpIteratorType.SCTP_ITERATOR_5F_A_A_A_F,
                 keynode_question,
                 ScElementType.sc_type_arc_pos_const_perm,
@@ -191,16 +232,16 @@ class CmdDo(base.BaseHandler):
                 cmd_result
             )
             if question is None:
-                return serialize_error(self, 404, "Can't find question node")
+                return self.serialize_error(self, 404, "Can't find question node")
 
             question = question[0][2]
 
-            logic.append_to_system_elements(sctp_client, keynode_system_element, question)
+            logic.append_to_system_elements(self.sctpClient, keynode_system_element, question)
             
             # generate main identifiers
-            langs = logic.get_languages_list(keynode_languages, sctp_client)
+            langs = logic.get_languages_list(keynode_languages, self.sctpClient)
             if langs:
-                templates = sctp_client.iterate_elements(
+                templates = self.sctpClient.iterate_elements(
                     SctpIteratorType.SCTP_ITERATOR_5F_A_A_A_F,
                     cmd_addr,
                     ScElementType.sc_type_arc_common | ScElementType.sc_type_const,
@@ -216,13 +257,13 @@ class CmdDo(base.BaseHandler):
                     for l in langs:
                         identifiers[str(l)] = {}
                         for a in arguments:
-                            idtf_value = logic.get_identifier_translated(a, l, keys, sctp_client)
+                            idtf_value = logic.get_identifier_translated(a, l, keys, self.sctpClient)
                             if idtf_value:
                                 identifiers[str(l)][str(a)] = idtf_value
                                 
                     
                     for t in templates:
-                        input_arcs = sctp_client.iterate_elements(
+                        input_arcs = self.sctpClient.iterate_elements(
                                             SctpIteratorType.SCTP_ITERATOR_3A_A_F,
                                             ScElementType.sc_type_node | ScElementType.sc_type_const | ScElementType.sc_type_node_class,
                                             ScElementType.sc_type_arc_pos_const_perm,
@@ -233,7 +274,7 @@ class CmdDo(base.BaseHandler):
                                     if not generated.has_key(str(l)) and arc[0] == l:
                                         lang_idtfs = identifiers[str(l)]
                                         # get content of link
-                                        data = sctp_client.get_link_content(t[2]).decode('utf-8')
+                                        data = self.sctpClient.get_link_content(t[2]).decode('utf-8')
                                         if data:
                                             for idx in xrange(len(arguments)):
                                                 value = arguments[idx].to_id()
@@ -243,56 +284,53 @@ class CmdDo(base.BaseHandler):
                                                 
                                             
                                             # generate identifier
-                                            idtf_link = sctp_client.create_link()
-                                            sctp_client.set_link_content(idtf_link, str(data.encode('utf-8')))
-                                            sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, l, idtf_link)
+                                            idtf_link = self.sctpClient.create_link()
+                                            self.sctpClient.set_link_content(idtf_link, str(data.encode('utf-8')))
+                                            self.sctpClient.create_arc(ScElementType.sc_type_arc_pos_const_perm, l, idtf_link)
                                             
-                                            bin_arc = sctp_client.create_arc(ScElementType.sc_type_arc_common | ScElementType.sc_type_const,
+                                            bin_arc = self.sctpClient.create_arc(ScElementType.sc_type_arc_common | ScElementType.sc_type_const,
                                                                              question, idtf_link)
-                                            sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm,
+                                            self.sctpClient.create_arc(ScElementType.sc_type_arc_pos_const_perm,
                                                                    keynode_nrel_main_idtf, bin_arc)
                                             
                                             generated[str(l)] = True
 
             # create author
-            sc_session = logic.ScSession(self, sctp_client, keys)
+            sc_session = logic.ScSession(self, self.sctpClient, keys)
             user_node = sc_session.get_sc_addr()
             if not user_node:
-                return serialize_error(self, 404, "Can't resolve user node")
+                return self.serialize_error(self, 404, "Can't resolve user node")
             
-            arc = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, keynode_ui_user, user_node)
-            logic.append_to_system_elements(sctp_client, keynode_system_element, arc)
+            arc = self.sctpClient.create_arc(ScElementType.sc_type_arc_pos_const_perm, keynode_ui_user, user_node)
+            logic.append_to_system_elements(self.sctpClient, keynode_system_element, arc)
 
-            author_arc = sctp_client.create_arc(ScElementType.sc_type_arc_common | ScElementType.sc_type_const, question, user_node)
-            logic.append_to_system_elements(sctp_client, keynode_system_element, author_arc)
-            arc = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, keynode_nrel_authors, author_arc)
-            logic.append_to_system_elements(sctp_client, keynode_system_element, arc)
+            author_arc = self.sctpClient.create_arc(ScElementType.sc_type_arc_common | ScElementType.sc_type_const, question, user_node)
+            logic.append_to_system_elements(self.sctpClient, keynode_system_element, author_arc)
+            arc = self.sctpClient.create_arc(ScElementType.sc_type_arc_pos_const_perm, keynode_nrel_authors, author_arc)
+            logic.append_to_system_elements(self.sctpClient, keynode_system_element, arc)
 
 
             # initiate question
-            arc = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, keynode_question_initiated, question)
-            logic.append_to_system_elements(sctp_client, keynode_system_element, arc)
+            arc = self.sctpClient.create_arc(ScElementType.sc_type_arc_pos_const_perm, keynode_question_initiated, question)
+            logic.append_to_system_elements(self.sctpClient, keynode_system_element, arc)
 
             # first of all we need to wait answer to this question
-            #print sctp_client.iterate_elements(SctpIteratorType.SCTP_ITERATOR_3F_A_A, keynode_question_initiated, 0, 0)
+            #print self.sctpClient.iterate_elements(SctpIteratorType.SCTP_ITERATOR_3F_A_A, keynode_question_initiated, 0, 0)
             
             result = { 'question': question.to_id() }
             
-        sctp_client.shutdown()
-        self.set_header("Content-Type", "application/json")
-        self.finish(json.dumps(result))
+        self.serialize("application/json", json.dumps(result))
+
         
-        
-class QuestionAnswerTranslate(base.BaseHandler):
+class QuestionAnswerTranslate(DefaultHandler):
     
     @tornado.web.asynchronous
     def post(self):
-        sctp_client = new_sctp_client()
-
+        self.start_sctp_client()
         question_addr = ScAddr.parse_from_string(self.get_argument(u'question', None))
         format_addr = ScAddr.parse_from_string(self.get_argument(u'format', None))
         
-        keys = Keynodes(sctp_client)
+        keys = Keynodes(self.sctpClient)
         keynode_nrel_answer = keys[KeynodeSysIdentifiers.question_nrel_answer]
         keynode_nrel_translation = keys[KeynodeSysIdentifiers.nrel_translation]
         keynode_nrel_format = keys[KeynodeSysIdentifiers.nrel_format]
@@ -302,58 +340,58 @@ class QuestionAnswerTranslate(base.BaseHandler):
         wait_time = 0
         wait_dt = 0.1
         
-        answer = logic.find_answer(question_addr, keynode_nrel_answer, sctp_client)
+        answer = logic.find_answer(question_addr, keynode_nrel_answer, self.sctpClient)
         while answer is None:
             time.sleep(wait_dt)
             wait_time += wait_dt
             if wait_time > tornado.options.options.event_wait_timeout:
-                return serialize_error(self, 404, 'Timeout waiting for answer')
+                return self.serialize_error(self, 404, 'Timeout waiting for answer')
             
-            answer = logic.find_answer(question_addr, keynode_nrel_answer, sctp_client)
+            answer = logic.find_answer(question_addr, keynode_nrel_answer, self.sctpClient)
         
         if answer is None:
-            return serialize_error(self, 404, 'Answer not found')
+            return self.serialize_error(self, 404, 'Answer not found')
         
         answer_addr = answer[0][2]
         
         # try to find translation to specified format
-        result_link_addr = logic.find_translation_with_format(answer_addr, format_addr, keynode_nrel_format, keynode_nrel_translation, sctp_client)
+        result_link_addr = logic.find_translation_with_format(answer_addr, format_addr, keynode_nrel_format, keynode_nrel_translation, self.sctpClient)
         
         # if link addr not found, then run translation of answer to specified format
         if result_link_addr is None:
-            trans_cmd_addr = sctp_client.create_node(ScElementType.sc_type_node | ScElementType.sc_type_const)
-            logic.append_to_system_elements(sctp_client, keynode_system_element, trans_cmd_addr)
+            trans_cmd_addr = self.sctpClient.create_node(ScElementType.sc_type_node | ScElementType.sc_type_const)
+            logic.append_to_system_elements(self.sctpClient, keynode_system_element, trans_cmd_addr)
             
-            arc_addr = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, trans_cmd_addr, answer_addr)
-            logic.append_to_system_elements(sctp_client, keynode_system_element, arc_addr)
+            arc_addr = self.sctpClient.create_arc(ScElementType.sc_type_arc_pos_const_perm, trans_cmd_addr, answer_addr)
+            logic.append_to_system_elements(self.sctpClient, keynode_system_element, arc_addr)
             
-            arc_addr = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, keys[KeynodeSysIdentifiers.ui_rrel_source_sc_construction], arc_addr)
-            logic.append_to_system_elements(sctp_client, keynode_system_element, arc_addr)
+            arc_addr = self.sctpClient.create_arc(ScElementType.sc_type_arc_pos_const_perm, keys[KeynodeSysIdentifiers.ui_rrel_source_sc_construction], arc_addr)
+            logic.append_to_system_elements(self.sctpClient, keynode_system_element, arc_addr)
             
-            arc_addr = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, trans_cmd_addr, format_addr)
-            logic.append_to_system_elements(sctp_client, keynode_system_element, arc_addr)
+            arc_addr = self.sctpClient.create_arc(ScElementType.sc_type_arc_pos_const_perm, trans_cmd_addr, format_addr)
+            logic.append_to_system_elements(self.sctpClient, keynode_system_element, arc_addr)
             
-            arc_addr = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, keys[KeynodeSysIdentifiers.ui_rrel_output_format], arc_addr)
-            logic.append_to_system_elements(sctp_client, keynode_system_element, arc_addr)
+            arc_addr = self.sctpClient.create_arc(ScElementType.sc_type_arc_pos_const_perm, keys[KeynodeSysIdentifiers.ui_rrel_output_format], arc_addr)
+            logic.append_to_system_elements(self.sctpClient, keynode_system_element, arc_addr)
             
             # add into translation command set
-            arc_addr = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, keys[KeynodeSysIdentifiers.ui_command_translate_from_sc], trans_cmd_addr)
-            logic.append_to_system_elements(sctp_client, keynode_system_element, arc_addr)
+            arc_addr = self.sctpClient.create_arc(ScElementType.sc_type_arc_pos_const_perm, keys[KeynodeSysIdentifiers.ui_command_translate_from_sc], trans_cmd_addr)
+            logic.append_to_system_elements(self.sctpClient, keynode_system_element, arc_addr)
             
             # initialize command
-            arc_addr = sctp_client.create_arc(ScElementType.sc_type_arc_pos_const_perm, keys[KeynodeSysIdentifiers.ui_command_initiated], trans_cmd_addr)
-            logic.append_to_system_elements(sctp_client, keynode_system_element, arc_addr)
+            arc_addr = self.sctpClient.create_arc(ScElementType.sc_type_arc_pos_const_perm, keys[KeynodeSysIdentifiers.ui_command_initiated], trans_cmd_addr)
+            logic.append_to_system_elements(self.sctpClient, keynode_system_element, arc_addr)
             
             # now we need to wait translation result
             wait_time = 0
-            translation = logic.find_translation_with_format(answer_addr, format_addr, keynode_nrel_format, keynode_nrel_translation, sctp_client)
+            translation = logic.find_translation_with_format(answer_addr, format_addr, keynode_nrel_format, keynode_nrel_translation, self.sctpClient)
             while translation is None:
                 time.sleep(wait_dt)
                 wait_time += wait_dt
                 if wait_time > tornado.options.options.event_wait_timeout:
-                    return serialize_error(self, 404, 'Timeout waiting for answer translation')
+                    return self.serialize_error(self, 404, 'Timeout waiting for answer translation')
  
-                translation = logic.find_translation_with_format(answer_addr, format_addr, keynode_nrel_format, keynode_nrel_translation, sctp_client)
+                translation = logic.find_translation_with_format(answer_addr, format_addr, keynode_nrel_format, keynode_nrel_translation, self.sctpClient)
                 
             if translation is not None:
                 result_link_addr = translation
@@ -362,43 +400,34 @@ class QuestionAnswerTranslate(base.BaseHandler):
         if result_link_addr is not None:
             result = json.dumps({"link": result_link_addr.to_id()})
     
-        sctp_client.shutdown()
-        self.set_header("Content-Type", "application/json")
-        self.finish(result) 
+        self.serialize("application/json", result)
         
-        
-class LinkContent(base.BaseHandler):
+class LinkContent(DefaultHandler):
     
     @tornado.web.asynchronous
     def get(self):
-
-        sctp_client = new_sctp_client()
-    
-        keys = Keynodes(sctp_client)
+        self.start_sctp_client()
+        keys = Keynodes(self.sctpClient)
         keynode_nrel_format = keys[KeynodeSysIdentifiers.nrel_format]
         keynode_nrel_mimetype = keys[KeynodeSysIdentifiers.nrel_mimetype]
     
         # parse arguments
         addr = ScAddr.parse_from_string(self.get_argument('addr', None))
         if addr is None:
-            return serialize_error(self, 404, 'Invalid arguments')
+            return self.serialize_error(self, 404, 'Invalid arguments')
     
-        result = sctp_client.get_link_content(addr)
+        result = self.sctpClient.get_link_content(addr)
         if result is None:
-            return serialize_error(self, 404, 'Content not found')
+            return self.serialize_error(self, 404, 'Content not found')
     
-        sctp_client.shutdown()
-        self.set_header("Content-Type", logic.get_link_mime(addr, keynode_nrel_format, keynode_nrel_mimetype, sctp_client))
-        self.finish(result)
+        self.serialize(logic.get_link_mime(addr, keynode_nrel_format, keynode_nrel_mimetype, self.sctpClient), result)
+
         
-        
-class LinkFormat(base.BaseHandler):
+class LinkFormat(DefaultHandler):
     
     @tornado.web.asynchronous
     def post(self):
-   
-        sctp_client = new_sctp_client()
-
+        self.start_sctp_client()
         # parse arguments
         first = True
         arg = None
@@ -412,7 +441,7 @@ class LinkFormat(base.BaseHandler):
             first = False
             idx += 1
 
-        keys = Keynodes(sctp_client)
+        keys = Keynodes(self.sctpClient)
         keynode_nrel_format = keys[KeynodeSysIdentifiers.nrel_format]
         keynode_format_txt = keys[KeynodeSysIdentifiers.format_txt]
 
@@ -420,7 +449,7 @@ class LinkFormat(base.BaseHandler):
         for arg in arguments:
 
             # try to resolve format
-            format = sctp_client.iterate_elements(
+            format = self.sctpClient.iterate_elements(
                 SctpIteratorType.SCTP_ITERATOR_5F_A_A_A_F,
                 arg,
                 ScElementType.sc_type_arc_common | ScElementType.sc_type_const,
@@ -433,53 +462,41 @@ class LinkFormat(base.BaseHandler):
             else:
                 result[arg.to_id()] = keynode_format_txt.to_id()
 
-        sctp_client.shutdown()
-        self.set_header("Content-Type", "application/json")
-        self.finish(json.dumps(result))
+        self.serialize("application/json", json.dumps(result))
+
         
         
-        
-class Languages(base.BaseHandler):
+class Languages(DefaultHandler):
     
     @tornado.web.asynchronous
     def get(self):
-        
-        sctp_client = new_sctp_client()
-        keys = Keynodes(sctp_client)
-        
-        langs = logic.get_languages_list(keys[KeynodeSysIdentifiers.languages], sctp_client)
-        
-        sctp_client.shutdown()
-        self.set_header("Content-Type", "application/json")
-        self.finish(json.dumps(langs))
+        self.start_sctp_client()
+        keys = Keynodes(self.sctpClient)
+        langs = logic.get_languages_list(keys[KeynodeSysIdentifiers.languages], self.sctpClient)
+        self.serialize("Content-Type", "application/json", json.dumps(langs))
     
-    
-class LanguageSet(base.BaseHandler):
+class LanguageSet(DefaultHandler):
     
     @tornado.web.asynchronous
     def post(self):
+        self.start_sctp_client()
         lang_addr = ScAddr.parse_from_string(self.get_argument(u'lang_addr', None))
         
-        sctp_client = new_sctp_client()
-        keys = Keynodes(sctp_client)
+        keys = Keynodes(self.sctpClient)
     
-        sc_session = logic.ScSession(self, sctp_client, keys)
+        sc_session = logic.ScSession(self, self.sctpClient, keys)
         sc_session.set_current_lang_mode(lang_addr)
         
-        sctp_client.shutdown()
-        self.set_header("Content-Type", "application/json")
-        self.finish()
+        self.serialize("application/json")
     
-class IdtfFind(base.BaseHandler):
+class IdtfFind(DefaultHandler):
     
     @tornado.web.asynchronous
     def get(self):
-        result = None
-    
-    
+        self.start_sctp_client()
         # get arguments
         substr = self.get_argument('substr', None)
-        
+        substrLen = float(len(substr))
         # connect to redis an try to find identifiers
         r = redis.StrictRedis(host = tornado.options.options.redis_host, 
                               port = tornado.options.options.redis_port,
@@ -507,15 +524,24 @@ class IdtfFind(base.BaseHandler):
                 utf = idtf.decode('utf-8')
                 addr = ScAddr.parse_binary(rep)
                 if utf.startswith(u"idtf:sys:") and len(sys) < max_n:
-                    sys.append([addr.to_id(), utf[9:]])
+                    # get text
+                    text = utf[9:]
+                    # create list: [idtf, autocomplete text, value comparison criterion]
+                    sys.append([addr.to_id(), text, float(substrLen)/float(len(text))])
                 elif utf.startswith(u"idtf:main:") and len(main) < max_n:
-                    main.append([addr.to_id(), utf[10:]])
+                    text = utf[1:]
+                    main.append([addr.to_id(), text, float(substrLen)/float(len(text))])
                 elif utf.startswith(u"idtf:common:") and len(common) < max_n:
-                    common.append([addr.to_id(), utf[12:]])
+                    text = utf[9:]
+                    common.append([addr.to_id(), text, float(substrLen)/float(len(text))])
+        # sort lists by third element(value comparison criterion) and exclude it from list
+        sys = [[item[0], item[1]] for item in sorted(sys, key=lambda x: x[2])]
+        main = [[item[0], item[1]] for item in sorted(main, key=lambda x: x[2])]
+        common = [[item[0], item[1]] for item in sorted(common, key=lambda x: x[2])]
+
                     
 
-        sctp_client = new_sctp_client()
-        keys = Keynodes(sctp_client)
+        keys = Keynodes(self.sctpClient)
         keynode_nrel_main_idtf = keys[KeynodeSysIdentifiers.nrel_main_idtf]
         keynode_nrel_system_identifier = keys[KeynodeSysIdentifiers.nrel_system_identifier]
         keynode_nrel_idtf = keys[KeynodeSysIdentifiers.nrel_idtf]
@@ -523,16 +549,14 @@ class IdtfFind(base.BaseHandler):
         result[keynode_nrel_system_identifier.to_id()] = sys
         result[keynode_nrel_main_idtf.to_id()] = main
         result[keynode_nrel_idtf.to_id()] = common
-        
-        sctp_client.shutdown()
-        self.set_header("Content-Type", "application/json")
-        self.finish(json.dumps(result))
-        
-class IdtfResolve(base.BaseHandler):
+
+        self.serialize("application/json", json.dumps(result))
+
+class IdtfResolve(DefaultHandler):
     
     @tornado.web.asynchronous
     def post(self):
-        result = None
+        self.start_sctp_client()
 
         # get arguments
         idx = 1
@@ -544,10 +568,9 @@ class IdtfResolve(base.BaseHandler):
                 arguments.append(arg)
             idx += 1
 
-        sctp_client = new_sctp_client()
-        keys = Keynodes(sctp_client)
+        keys = Keynodes(self.sctpClient)
         
-        sc_session = logic.ScSession(self, sctp_client, keys)
+        sc_session = logic.ScSession(self, self.sctpClient, keys)
         used_lang = sc_session.get_used_language()
         
 
@@ -556,28 +579,22 @@ class IdtfResolve(base.BaseHandler):
         for addr_str in arguments:
             addr = ScAddr.parse_from_string(addr_str)
             if addr is None:
-                self.clear()
-                self.set_status(404)
-                self.finish('Can\'t parse sc-addr from argument: %s' % addr_str)
-            
+                self.serialize_error(404, 'Can\'t parse sc-addr from argument: %s' % addr_str)
+
             found = False
 
-            idtf_value = logic.get_identifier_translated(addr, used_lang, keys, sctp_client)
+            idtf_value = logic.get_identifier_translated(addr, used_lang, keys, self.sctpClient)
             if idtf_value:
                 result[addr_str] = idtf_value
         
-        sctp_client.shutdown()
-        self.set_header("Content-Type", "application/json")
-        self.finish(json.dumps(result))
+        self.serialize("application/json", json.dumps(result))
+
         
-        
-class AddrResolve(base.BaseHandler):
+class AddrResolve(DefaultHandler):
     
     @tornado.web.asynchronous
     def post(self):
-        
-        sctp_client = new_sctp_client()
-
+        self.start_sctp_client()
         # parse arguments
         first = True
         arg = None
@@ -593,22 +610,18 @@ class AddrResolve(base.BaseHandler):
 
         res = {}
         for idtf in arguments:
-            addr = sctp_client.find_element_by_system_identifier(str(idtf))
+            addr = self.sctpClient.find_element_by_system_identifier(str(idtf))
             if addr is not None:
                 res[idtf] = addr.to_id()
 
-        sctp_client.shutdown()
-        self.set_header("Content-Type", "application/json")
-        self.finish(json.dumps(res))
+        self.serialize("application/json", json.dumps(res))
+
         
-        
-class InfoTooltip(base.BaseHandler):
+class InfoTooltip(DefaultHandler):
     
     @tornado.web.asynchronous
     def post(self):
-        
-        sctp_client = new_sctp_client()
-
+        self.start_sctp_client()
         # parse arguments
         first = True
         arg = None
@@ -622,31 +635,27 @@ class InfoTooltip(base.BaseHandler):
             first = False
             idx += 1
             
-        keys = Keynodes(sctp_client)
-        sc_session = logic.ScSession(self, sctp_client, keys)
+        keys = Keynodes(self.sctpClient)
+        sc_session = logic.ScSession(self, self.sctpClient, keys)
 
         res = {}
         for addr in arguments:
-            tooltip = logic.find_tooltip(ScAddr.parse_from_string(addr), sctp_client, keys, sc_session.get_used_language())
+            tooltip = logic.find_tooltip(ScAddr.parse_from_string(addr), self.sctpClient, keys, sc_session.get_used_language())
             res[addr] = tooltip
 
-        sctp_client.shutdown()
-        self.set_header("Content-Type", "application/json")
-        self.finish(json.dumps(res))
+        self.serialize("application/json", json.dumps(res))
 
     
     
-class User(base.BaseHandler):
+class User(DefaultHandler):
     
     @tornado.web.asynchronous
     def get(self):
-        result = '{}'
-    
-        sctp_client = new_sctp_client()
-        keys = Keynodes(sctp_client)
+        self.start_sctp_client()
+        keys = Keynodes(self.sctpClient)
         
         # get user sc-addr
-        sc_session = logic.ScSession(self, sctp_client, keys)
+        sc_session = logic.ScSession(self, self.sctpClient, keys)
         user_addr = sc_session.get_sc_addr()
         result = {
                     'sc_addr': user_addr.to_id(),
@@ -655,6 +664,4 @@ class User(base.BaseHandler):
                     'default_ext_lang': sc_session.get_default_ext_lang().to_id()
         }
     
-        sctp_client.shutdown()
-        self.set_header("Content-Type", "application/json")
-        self.finish(json.dumps(result))
+        self.serialize("application/json", json.dumps(result))                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
