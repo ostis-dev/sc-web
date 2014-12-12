@@ -38,6 +38,14 @@
     src: url(../fonts/timesi.ttf);
     font-style: italic;
 }
+@font-face {
+    font-family: AppleSymbServ;
+    src: url(../fonts/AppleSymbols.ttf);
+}
+@font-face {
+    font-family: UnicodeSymbServ;
+    src: url(../fonts/symbol.ttf);
+}
 .scs-container {
     border: solid 1px #cccccc;
     background-color: #f8f8f9;
@@ -124,12 +132,12 @@
     float: left;
     margin-top: -2px;
     vertical-align: text-top;
-    font-family: /*"Unicode Symbols", */"TNRServ", /*"Apple Symbols",*/"ArialServ";
+    font-family: "UnicodeSymbServ", "TNRServ", "AppleSymbServ","ArialServ";
     color: #2a6496;
 }
 
 .scs-scn-connector {
-    font-family: /*"Unicode Symbols", */"TNRServ", /*"Apple Symbols",*/"ArialServ";
+    font-family: "UnicodeSymbServ", "TNRServ", "AppleSymbServ","ArialServ";
     color: #2a6496;
 }
 
