@@ -657,3 +657,31 @@ class User(base.BaseHandler):
         sctp_client.shutdown()
         self.set_header("Content-Type", "application/json")
         self.finish(json.dumps(result))
+
+
+class GetStatistics(base.BaseHandler):
+
+    @tornado.web.asynchronous
+    def get(self):
+        result = '[]'
+        sctp_client = new_sctp_client()
+        stat_data = sctp_client.get_statistics(int(self.get_argument('from', None)), int(self.get_argument('to', None)))
+
+        data = []  # ['Nodes', 'Arcs', 'Links', 'Live nodes', 'Live arcs', 'Live links', 'Empty', 'Connections', 'Commands', 'Command errors']
+        for item in stat_data:
+            data.append([
+                item.time,
+                item.nodeCount,
+                item.arcCount,
+                item.linksCount,
+                item.liveNodeCount,
+                item.liveArcCount,
+                item.liveLinkCount,
+                item.emptyCount,
+                item.connectionsCount,
+                item.commandsCount,
+                item.commandErrorsCount,
+            ])
+        sctp_client.shutdown()
+        self.set_header("Content-Type", "application/json")
+        self.finish(json.dumps(data))
