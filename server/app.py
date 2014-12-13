@@ -76,7 +76,7 @@ def main():
         cookie_secret = secret.get_secret(),
         login_url = "/auth/login",
         template_path = tornado.options.options.templates_path,
-        xsrf_cookies = False,
+        xsrf_cookies = True,
         gzip = True
     )
 
