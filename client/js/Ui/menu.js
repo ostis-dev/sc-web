@@ -79,6 +79,13 @@ SCWeb.ui.Menu = {
                 
         $('.menu-item').click(function() {
             var sc_addr = $(this).attr('sc_addr');
+
+            GoogleAnalytics.trackEvent(
+                GoogleAnalytics.EVENT_CATEGORY.MENU,
+                GoogleAnalytics.EVENT_ACTION.MENU_ITEM_CLICK,
+                sc_addr
+            );
+
             if ($(this).hasClass('menu-cmd-atom')) {
                 SCWeb.core.Main.doCommand(sc_addr, SCWeb.core.Arguments._arguments);
             } else if ($(this).hasClass('menu-cmd-keynode')) {
