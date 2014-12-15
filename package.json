@@ -1,0 +1,29 @@
+{
+    "name": "sc-web",
+    "version": "0.1.0",
+    "devDependencies": {
+        "grunt": "~0.4.5",
+        "grunt-contrib-jshint": "latest",
+        "grunt-contrib-concat": "latest",
+        "grunt-contrib-uglify": "latest",
+        "grunt-contrib-cssmin": "latest"
+    },
+
+    "SOURCE_SC_WEB_CORE_PATH": "client/js",
+    "TARGET_SC_WEB_CORE_PATH": "client/static/components/js/sc-web-core.js",
+
+    "SOURCE_GITHUB_PATH": "components/github/src",
+    "TARGET_GITHUB_PATH": "client/static/components/js/github/github.js",
+
+    "SOURCE_HTML_PATH": "components/html/src",
+    "TARGET_HTML_PATH": "client/static/components/js/html/html.js",
+
+    "SOURCE_SCG_PATH": "components/scg/src",
+    "TARGET_SCG_PATH": "client/static/components/js/scg/scg.js",
+
+    "SOURCE_SCS_PATH": "components/scs/src",
+    "TARGET_SCS_PATH": "client/static/components/js/scs/scs.js",
+
+    "TARGET_SC_WEB_CORE_MIN_PATH": "client/static/components/js/sc-web-core.min.js"
+
+}
