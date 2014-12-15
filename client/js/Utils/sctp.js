@@ -817,12 +817,12 @@ SctpClient.prototype.event_create = function(evt_type, addr, callback) {
     var buffer = new SctpCommandBuffer(sc_addr_size + 1);
     buffer.setHeader(SctpCommandType.SCTP_CMD_EVENT_CREATE, 0, 0);
     buffer.writeUint8(evt_type);
-    buffer.writeUint32(addr);
+    buffer.writeUint32(parseInt(addr));
 
     this.new_request(buffer.data, function(data) {
         return data.getResUint32(0);
     }).done(function(data) {
-        self.events[data.result] = callback;
+        self.events[data] = callback;
         dfd.resolve(data);
     }).fail(function(data) {
         dfd.reject(data);
@@ -843,7 +843,7 @@ SctpClient.prototype.event_destroy = function(evt_id) {
         return data.getResUint32(0);
     }).done(function(data) {
         delete self.event_emit[evt_id];
-        dfd.promise(data.result);
+        dfd.promise(data);
     }).fail(function(data){ 
         dfd.reject(data);
     });
@@ -861,6 +861,7 @@ SctpClient.prototype.event_emit = function() {
     this.new_request(buffer.data)
     .done(function (data) {
         var n = data.getResUint32(0);
+        
         for (var i = 0; i < n; ++i) {
             evt_id = data.getResUint32(4 + i * 12);
             addr = data.getResUint32(8 + i * 12);
