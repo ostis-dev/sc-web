@@ -414,7 +414,18 @@ SCWeb.core.Server = {
             success: success,
             error: error
         });
+    },
+
+
+    getAnalytics: function (success, error) {
+        $.ajax({
+            url: 'api/analytics',
+            success: success,
+            error: error
+        });
     }
+
+
 };
 
 
