@@ -68,6 +68,8 @@ def main():
             
             (r"/api/user/", api.User),
 
+            (r"/api/analytics", api.Analytics),
+
             (r"/sctp", ws.SocketHandler),
             ]
 

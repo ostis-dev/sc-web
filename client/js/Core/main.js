@@ -22,6 +22,7 @@ SCWeb.core.Main = {
         //SCWeb.ui.Locker.show();
 
         SCWeb.core.Server._initialize();
+        GoogleAnalytics.init();
         SctpClientCreate().done(function(client) {
         
             window.sctpClient = client;

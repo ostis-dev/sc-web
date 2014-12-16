@@ -657,3 +657,23 @@ class User(base.BaseHandler):
         sctp_client.shutdown()
         self.set_header("Content-Type", "application/json")
         self.finish(json.dumps(result))
+
+
+class Analytics(base.BaseHandler):
+
+    @tornado.web.asynchronous
+    def get(self):
+        result = {
+            'has_analytics': False
+        }
+
+        admin_wants_analytics = True
+
+        if admin_wants_analytics:
+            result = {
+                'has_analytics': True,
+                'ua': 'UA-57454857-1'
+            }
+
+        self.set_header("Content-Type", "application/json")
+        self.finish(json.dumps(result))
