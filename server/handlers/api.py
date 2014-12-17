@@ -478,7 +478,7 @@ class IdtfFind(base.BaseHandler):
     
         # get arguments
         substr = self.get_argument('substr', None)
-        
+        substrLen = float(len(substr))
         # connect to redis an try to find identifiers
         r = redis.StrictRedis(host = tornado.options.options.redis_host, 
                               port = tornado.options.options.redis_port,
@@ -506,11 +506,21 @@ class IdtfFind(base.BaseHandler):
                 utf = idtf.decode('utf-8')
                 addr = ScAddr.parse_binary(rep)
                 if utf.startswith(u"idtf:sys:") and len(sys) < max_n:
-                    sys.append([addr.to_id(), utf[9:]])
+                    # get text
+                    text = utf[9:]
+                    # create list: [idtf, autocomplete text, value comparison criterion]
+                    sys.append([addr.to_id(), text, float(substrLen)/float(len(text))])
                 elif utf.startswith(u"idtf:main:") and len(main) < max_n:
-                    main.append([addr.to_id(), utf[10:]])
+                    text = utf[1:]
+                    main.append([addr.to_id(), text, float(substrLen)/float(len(text))])
                 elif utf.startswith(u"idtf:common:") and len(common) < max_n:
-                    common.append([addr.to_id(), utf[12:]])
+                    text = utf[9:]
+                    common.append([addr.to_id(), text, float(substrLen)/float(len(text))])
+        # sort lists by third element(value comparison criterion) and exclude it from list
+        sys = [[item[0], item[1]] for item in sorted(sys, key=lambda x: x[2])]
+        main = [[item[0], item[1]] for item in sorted(main, key=lambda x: x[2])]
+        common = [[item[0], item[1]] for item in sorted(common, key=lambda x: x[2])]
+
                     
 
         sctp_client = new_sctp_client()
@@ -522,7 +532,7 @@ class IdtfFind(base.BaseHandler):
         result[keynode_nrel_system_identifier.to_id()] = sys
         result[keynode_nrel_main_idtf.to_id()] = main
         result[keynode_nrel_idtf.to_id()] = common
-        
+
         sctp_client.shutdown()
         self.set_header("Content-Type", "application/json")
         self.finish(json.dumps(result))
