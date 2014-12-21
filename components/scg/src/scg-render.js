@@ -260,6 +260,9 @@ SCg.Render.prototype = {
                 }
                 return verticiesString;
             })
+	    .on('dblclick', function(d) {
+                self.scene.onMouseDoubleClickObject(d);
+            })
             .on('mouseover', function(d) {
                 self.classToogle(this, 'SCgStateHighlighted', true);
                 self.scene.onMouseOverObject(d);
