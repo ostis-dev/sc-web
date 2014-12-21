@@ -409,18 +409,30 @@ SCg.Scene.prototype = {
     },
     
     onMouseDoubleClick: function(x, y) {
-        
         if (this.modal != SCgModalMode.SCgModalNone) return; // do nothing
-        
         if (this.edit_mode == SCgEditMode.SCgModeSelect) {
             if (this.pointed_object)
                 return; // do nothing
             
-            this.createNode(sc_type_node | sc_type_const, new SCg.Vector3(x, y, 0), '');
+            var node = this.createNode(sc_type_node | sc_type_const, new SCg.Vector3(x, y, 0), '');
+            for (var i = 0; i < this.contours.length; i++) {
+                if (this.contours[i].isNodeInPolygon(node)) {
+                    this.contours[i].addChild(node);
+                }
+            }
+            this.focused_object = null;
             this.updateRender();
         }
+
+
+    },    
+
+    onMouseDoubleClickObject: function(obj) {
+        if (this.modal != SCgModalMode.SCgModalNone) return; // do nothing
+
+        this.pointed_object = null;
+        this.focused_object = obj;
     },
-    
     
     onMouseOverObject: function(obj) {
         if (this.modal != SCgModalMode.SCgModalNone) return; // do nothing
