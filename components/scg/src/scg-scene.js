@@ -365,7 +365,7 @@ SCg.Scene.prototype = {
         this.mouse_pos.y = y;
         
         if ((this.edit_mode == SCgEditMode.SCgModeSelect) && this.focused_object) {
-            if (this.focused_object.sc_type & sc_type_node) {
+            if (this.focused_object.sc_type & sc_type_node || this.focused_object.sc_type==sc_type_link) {
                 this.focused_object.setPosition(this.focused_object.position.clone().add(offset));
             }
             
