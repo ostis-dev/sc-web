@@ -583,8 +583,37 @@ SCg.ModelContour.prototype.removeChild = function(child) {
     child.contour = null;
 };
 
-SCg.ModelContour.prototype.isNodeInPolygon = function (node) {
-    return SCg.Algorithms.isPointInPolygon(node.position, this.points);
+SCg.ModelContour.prototype.isNodeInLastPolygonHierarchy = function (node) {
+    if(SCg.Algorithms.isPointInPolygon(node.position, this.points)){
+        for(var i = 0; i < this.childs.length; i++){
+            if(this.childs[i] instanceof SCg.ModelContour && this.childs[i].isNodeInLastPolygonHierarchy(node)){
+                return false;
+            }
+        }
+        return true;
+    }
+    return false;
+};
+
+SCg.ModelContour.prototype.isPolygonInLastPolygonHierarchy = function (polygon) {
+    if(this.isPolygonInPolygon(polygon)){
+        for(var i = 0; i < this.childs.length; i++){
+            if(this.childs[i] instanceof SCg.ModelContour && this.childs[i].isPolygonInLastPolygonHierarchy(polygon)){
+                return false;
+            }
+        }
+        return true;
+    }
+    return false;
+};
+
+SCg.ModelContour.prototype.isPolygonInPolygon = function (polygon) {
+    for(var i = 0; i < polygon.points.length; i++){
+        if(!SCg.Algorithms.isPointInPolygon(polygon.points[i], this.points)){
+            return false;
+        }
+    }
+    return true;
 };
 
 /**

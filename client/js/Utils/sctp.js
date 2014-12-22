@@ -817,7 +817,7 @@ SctpClient.prototype.event_create = function(evt_type, addr, callback) {
     var buffer = new SctpCommandBuffer(sc_addr_size + 1);
     buffer.setHeader(SctpCommandType.SCTP_CMD_EVENT_CREATE, 0, 0);
     buffer.writeUint8(evt_type);
-    buffer.writeUint32(addr);
+    buffer.writeUint32(parseInt(addr));
 
     this.new_request(buffer.data, function(data) {
         return data.getResUint32(0);
