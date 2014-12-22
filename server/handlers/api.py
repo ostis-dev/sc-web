@@ -62,7 +62,8 @@ class Init(base.BaseHandler):
                             'sc_addr': user_addr.to_id(),
                             'is_authenticated': False,
                             'current_lang': sc_session.get_used_language().to_id(),
-                            'default_ext_lang': sc_session.get_default_ext_lang().to_id()
+                            'default_ext_lang': sc_session.get_default_ext_lang().to_id(),
+                            'user_session_key': None
                            }
         }
     
@@ -651,7 +652,8 @@ class User(base.BaseHandler):
                     'sc_addr': user_addr.to_id(),
                     'is_authenticated': False,
                     'current_lang': sc_session.get_used_language().to_id(),
-                    'default_ext_lang': sc_session.get_default_ext_lang().to_id()
+                    'default_ext_lang': sc_session.get_default_ext_lang().to_id(),
+                    'user_session_key': None
         }
     
         sctp_client.shutdown()
