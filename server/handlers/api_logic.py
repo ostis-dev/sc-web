@@ -309,7 +309,8 @@ class ScSession:
         self.handler = handler
         
         self.user = handler.current_user
-        self.session_key = handler.get_secure_cookie("session_key")
+        if self.user:
+            self.user_session_key = handler.get_secure_cookie("session_key")
         self.sctp_client = sctp_client
         self.keynodes = keynodes
         self.sc_addr = None
@@ -323,9 +324,9 @@ class ScSession:
                 if not self.sc_addr:
                     self.sc_addr = self._user_new()
             else:
-                if not self.session_key:
-                    self.session_key = base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes)
-                    self.handler.set_secure_cookie("session_key", self.session_key)
+                if not self.user_session_key:
+                    self.user_session_key = base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes)
+                    self.handler.set_secure_cookie("session_key", self.user_session_key)
                 self.sc_addr = self._session_get_sc_addr()
                 if not self.sc_addr:
                     self.sc_addr = self._session_new_sc_addr()
@@ -430,10 +431,10 @@ class ScSession:
         return user_node
 
     def _session_new_sc_addr(self):
-        return self._create_user_with_system_idtf("session::" + str(self.session_key))
+        return self._create_user_with_system_idtf("session::" + str(self.user_session_key))
     
     def _session_get_sc_addr(self):
-        return self._find_user_by_system_idtf("session::" + str(self.session_key))
+        return self._find_user_by_system_idtf("session::" + str(self.user_session_key))
 
     def _user_new(self):
         return self._create_user_with_system_idtf("user::" + str(self.user.username))
