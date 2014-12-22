@@ -492,9 +492,22 @@ SCg.Scene.prototype = {
             }
 
             // case we moved object into the contour
-            if (!obj.contour && obj instanceof SCg.ModelNode) {
+            if(obj instanceof SCg.ModelNode){
                 for (var i = 0; i < this.contours.length; i++) {
-                    if (this.contours[i].isNodeInPolygon(obj)) {
+                    if (this.contours[i].isNodeInLastPolygonHierarchy(obj)) {
+                        if(obj.contour){
+                            obj.contour.removeChild(obj);
+                        }
+                        this.contours[i].addChild(obj);
+                    }
+                }
+            }
+            if(obj instanceof SCg.ModelContour){
+                for (var i = 0; i < this.contours.length; i++) {
+                    if (this.contours[i].isPolygonInLastPolygonHierarchy(obj)) {
+                        if(obj.contour){
+                            obj.contour.removeChild(obj);
+                        }
                         this.contours[i].addChild(obj);
                     }
                 }
