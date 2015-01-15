@@ -246,7 +246,7 @@ SCWeb.core.Server = {
             arguments[i.toString() + '_'] = arg;
         }
         arguments['cmd'] = cmd_addr;
-
+        arguments['_xsrf'] = SCWeb.core.Server.getCookie("_xsrf");
         this._push_task({
             type: "POST",
             url: "api/cmd/do/",
@@ -265,7 +265,7 @@ SCWeb.core.Server = {
         this._push_task({
             type: "POST",
             url: "api/question/answer/translate/",
-            data: { "question": question_addr, "format": format_addr },
+            data: { "question": question_addr, "format": format_addr, "_xsrf": SCWeb.core.Server.getCookie("_xsrf") },
             success: callback
         });
     },
@@ -300,6 +300,7 @@ SCWeb.core.Server = {
             callback(result);
         } else {
             (function(result, arguments, need_resolve, callback) {
+                arguments += '_xsrf=' + SCWeb.core.Server.getCookie("_xsrf")
                 self._push_task({
                     type: "POST",
                     url: "api/addr/resolve/",
@@ -333,7 +334,7 @@ SCWeb.core.Server = {
             var arg = links[i];
             arguments += i.toString() + '_=' + arg + '&';
         }
-        
+        arguments += '_xsrf=' + SCWeb.core.Server.getCookie("_xsrf")
         this._push_task({
             type: "POST",
             url: "api/link/format/",
@@ -352,7 +353,7 @@ SCWeb.core.Server = {
         this._push_task({
                 url: "api/link/content/",
                 type: "GET",
-                data: {"addr": addr},
+                data: {"addr": addr, "_xsrf": SCWeb.core.Server.getCookie("_xsrf")},
                 success: success,
                 error: error
             });
@@ -365,7 +366,7 @@ SCWeb.core.Server = {
         this._push_task({
             url: "api/languages/",
             type: "GET",
-            data: null,
+            data: {"_xsrf": SCWeb.core.Server.getCookie("_xsrf")},
             success: callback
         });
     },
@@ -378,7 +379,7 @@ SCWeb.core.Server = {
         this._push_task({
             url: "api/languages/set/",
             type: "POST",
-            data: {"lang_addr": lang_addr},
+            data: {"lang_addr": lang_addr, "_xsrf": SCWeb.core.Server.getCookie("_xsrf")},
             success: callback
         });
     },
@@ -391,7 +392,7 @@ SCWeb.core.Server = {
 
         $.ajax({
             url: "api/idtf/find/",
-            data: {"substr": str},
+            data: {"substr": str, "_xsrf": SCWeb.core.Server.getCookie("_xsrf")},
             type: "GET",
             success: callback
         });
@@ -406,15 +407,21 @@ SCWeb.core.Server = {
             var arg = addrs[i];
             arguments += i.toString() + '_=' + arg + '&';
         }
-        
-         $.ajax({
+        arguments += '_xsrf=' + SCWeb.core.Server.getCookie("_xsrf")
+        $.ajax({
             type: "POST",
             url: "api/info/tooltip/",
             data: arguments,
             success: success,
             error: error
         });
+    },
+
+    /**
+     * Get cookie attribute by attribute_name from current page
+     */
+    getCookie: function (attribute_name) {
+        var r = document.cookie.match("\\b" + attribute_name + "=([^;]*)\\b");
+        return r ? r[1] : undefined;
     }
 };
-
-
