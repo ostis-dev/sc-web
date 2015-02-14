@@ -72,6 +72,7 @@ class SocketProxy:
         cmdCode == sctp.types.SctpCommandType.SCTP_CMD_EVENT_DESTROY or \
         cmdCode == sctp.types.SctpCommandType.SCTP_CMD_EVENT_EMIT or \
         (self.write_rights and (cmdCode == sctp.types.SctpCommandType.SCTP_CMD_CREATE_NODE or \
+        cmdCode == sctp.types.SctpCommandType.SCTP_CMD_ERASE_ELEMENT or \
         cmdCode == sctp.types.SctpCommandType.SCTP_CMD_CREATE_ARC or \
         cmdCode == sctp.types.SctpCommandType.SCTP_CMD_CREATE_LINK or \
         cmdCode == sctp.types.SctpCommandType.SCTP_CMD_SET_LINK_CONTENT)):
@@ -110,7 +111,7 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         if u:
             canEdit = base.User._canEdit(database.get_user_rights(u))
         
-        self.proxy = SocketProxy(self.socket_write, canEdit)
+        self.proxy = SocketProxy(self.socket_write, True) # just for demo 
 
     def on_close(self):
         if self in clients:

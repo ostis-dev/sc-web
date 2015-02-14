@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="keywords" content="" />
+    <meta name="description" content="" />
+    
+    <script type="text/javascript" charset="utf-8" src="/static/common/jquery/jquery-2.1.3.js"></script>
+    <script type="text/javascript" charset="utf-8" src="/static/common/jquery/jquery.namespace.js"></script>
+    <script type="text/javascript" charset="utf-8" src="/static/components/js/sc-web-core.js"></script>
+    
+    <style>
+        .hidden {
+            display: none;
+        }
+        
+        .connection-state {
+            color: #00ff00;
+        }
+        
+        .connection-state.error {
+            color: #ff0000;
+        }
+        
+        .lamp {
+            box-shadow: 0px 0px 1px #888888;
+            display: inline-block;
+            margin: 10px 10px 10px 10px;
+            
+             -webkit-transition: box-shadow 200ms ease-in 0ms; /* property duration timing-function delay */
+            -moz-transition: box-shadow 200ms ease-in 0ms;
+            -o-transition: box-shadow 200ms ease-in 0ms;
+            transition: box-shadow 200ms ease-in 0ms;
+        }
+        
+        .lamp:hover {
+            box-shadow: 0px 0px 10px #888888;
+        }
+        
+        .light {
+            background-image: url('/static/demo/light_off.png');
+            background-repeat: no-repeat;
+            width: 204px;
+            height: 318px;
+            display: inline-block;
+            
+            -webkit-transition: background 200ms ease-in 0ms; /* property duration timing-function delay */
+            -moz-transition: background 200ms ease-in 0ms;
+            -o-transition: background 200ms ease-in 0ms;
+            transition: background 200ms ease-in 0ms;
+        }
+        
+        .light.on {
+            background-image: url('/static/demo/light_on.png');
+        }
+        
+        .switch {
+            display: inline-block;
+            background-image: url('/static/demo/switch_off.png');
+            background-repeat: no-repeat;
+            width: 56px;
+            height: 138px;
+            
+            -webkit-transition: background 100ms ease-in 0ms; /* property duration timing-function delay */
+            -moz-transition: background 100ms ease-in 0ms;
+            -o-transition: background 100ms ease-in 0ms;
+            transition: background 100ms ease-in 0ms;
+        }
+        
+        .switch.on {
+            background-image: url('/static/demo/switch_on.png');
+        }
+    </style>
+</head>
+
+
+<body id="body">
+    <p id="connection-state" class="connection-state error hidden">Connected</p>
+    <br/>
+    
+    <script>
+        
+        var keynode_lamps = null, 
+            keynode_lamps_on = null,
+            keynode_lamps_demo = null;
+        function resolveKeynodes() {
+            var dfd = new jQuery.Deferred();
+            
+            window.sctp_client.find_element_by_system_identifier('lamps').done(function(addr) {
+                keynode_lamps = addr;
+                
+                window.sctp_client.find_element_by_system_identifier('lamps_on').done(function(addr) {
+                    keynode_lamps_on = addr;
+                    
+                    window.sctp_client.find_element_by_system_identifier('lamps_demo').done(function(addr) {
+                        keynode_lamps_demo = addr;
+                        dfd.resolve();
+                    }).fail(dfd.reject);                   
+                    
+                }).fail(dfd.reject);
+                
+            }).fail(dfd.reject);
+            
+            return dfd.promise();
+        };
+        
+        function initMemory() {
+            var dfd = new jQuery.Deferred();
+            
+            SctpClientCreate().done(function(client) {
+                window.sctp_client = client;
+                
+                resolveKeynodes().done(dfd.resolve).fail(dfd.reject);
+            }).fail(dfd.reject);
+            
+            return dfd.promise();
+        }
+        
+        function addToSet(set, addr) {
+            window.sctp_client.create_arc(sc_type_arc_pos_const_perm, set, addr).done(function(a) {
+                window.sctp_client.create_arc(sc_type_arc_pos_const_perm, keynode_lamps_demo, a);
+            });
+        }
+        
+        function removeFromSet(set, addr) {
+            window.sctp_client.iterate_elements(SctpIteratorType.SCTP_ITERATOR_3F_A_F,
+                                               [set, 
+                                                sc_type_arc_pos_const_perm,
+                                                addr
+                                               ]).done(function(it) {
+                for (var i = 0; i < it.length; ++i) {
+                    window.sctp_client.erase_element(it[i][1]);
+                }
+            });
+        }
+        
+        function addLamp(arc) {
+            
+            function impl(arc, state_arc) {
+                $('body').append('<div class="lamp" arc_addr="' + arc + '" addr="' + arc + '"' + (state_arc ? (' state_arc="' + state_arc + '"') :'') + '>' + 
+                                    '<div class="light ' + (state_arc ? 'on' : '') + '"></div>' +
+                                    '<div class="switch ' + (state_arc ? 'on' : '') + '"></div>' +
+                                 '</div>');
+                
+                $('body .lamp[arc_addr="' + arc + '"] .switch').click(function() {
+                    var self = $(this);
+                    
+                    setLampState(self.parent().attr('addr'), !self.hasClass('on'));
+                    self.toggleClass('on');                    
+                });
+            }
+            
+            window.sctp_client.get_arc(arc).done(function(data) {
+                window.sctp_client.iterate_elements(SctpIteratorType.SCTP_ITERATOR_3F_A_F,
+                                                    [keynode_lamps_on, 
+                                                     sc_type_arc_pos_const_perm,
+                                                     data[1]
+                                               ])
+                .done(function(it) {
+                    impl(data[1], it[0][1]);
+                }).fail(function() {
+                    impl(data[1], null);
+                });
+                
+                
+            }).fail(function() {
+                console.log('Error to get lamp instance');
+            });
+        }
+        
+        function removeLamp(arc) {
+            $("body .lamp[arc_addr='" + arc +"']").remove();
+        }
+        
+        function updateLamp(state_arc, addr, value) {
+            if (value) {
+                var lamp = $("body .lamp[addr='" + addr +"']");
+                lamp.attr('state_arc', state_arc);
+                lamp.find('.light, .switch').addClass('on');
+            } else {
+                var lamp = $("body .lamp[state_arc='" + state_arc +"']");
+                lamp.removeAttr('state_arc');
+                lamp.find('.light, .switch').removeClass('on');
+            }
+        }
+        
+        function setLampState(addr, value) {
+            if (value) {
+                addToSet(keynode_lamps_on, addr);
+            } else {
+                removeFromSet(keynode_lamps_on, addr);
+            }
+        }        
+        
+        function subscribeLampAdd(callback) {
+            window.sctp_client.event_create(SctpEventType.SC_EVENT_ADD_OUTPUT_ARC, keynode_lamps, function(addr, arc) {
+                callback(arc);
+            }).done(function() {
+                window.sctp_client.iterate_elements(SctpIteratorType.SCTP_ITERATOR_3F_A_A,
+                                                    [keynode_lamps, 
+                                                     sc_type_arc_pos_const_perm,
+                                                     sc_type_node
+                                                    ]).done(function(it) {
+                    for (var i = 0; i < it.length; ++i)
+                        addLamp(it[i][1]);
+                });
+            });
+        }
+        
+        function subscribeLampRemove(callback) {
+            window.sctp_client.event_create(SctpEventType.SC_EVENT_REMOVE_OUTPUT_ARC, keynode_lamps, function(addr, arc) {
+                callback(arc);
+            });
+        }
+        
+        function subscriebLampUpdate(callback) {
+            window.sctp_client.event_create(SctpEventType.SC_EVENT_ADD_OUTPUT_ARC, keynode_lamps_on, function(addr, arc) {
+                window.sctp_client.get_arc(arc).done(function(data) {
+                    callback(arc, data[1], true);
+                });
+            });
+            window.sctp_client.event_create(SctpEventType.SC_EVENT_REMOVE_OUTPUT_ARC, keynode_lamps_on, function(addr, arc) {
+                callback(arc, null, false);
+            });
+        }
+        
+        $(document).ready(function() {
+            
+            var state = $("#connection-state");
+            
+            initMemory().done(function() {
+                
+                state.removeClass('hidden').removeClass('error');
+                
+                subscribeLampAdd(addLamp);
+                subscribeLampRemove(removeLamp);
+                subscriebLampUpdate(updateLamp);
+                
+            }).fail(function() {
+                state.removeClass('hidden');
+            });
+            
+        });
+    </script>
+</body>
+
+</html>

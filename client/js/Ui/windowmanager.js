@@ -323,12 +323,11 @@ SCWeb.ui.WindowManager = {
                 addr: info.addr, 
                 is_struct: true, 
                 container: cntId,
-                canEdit: false
+                canEdit: true /* just for demo */
             });
         }
         return res;
     },
-    
 
     // ---------- Translation listener interface ------------
     updateTranslation: function(namesMap) {

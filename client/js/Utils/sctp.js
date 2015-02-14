@@ -345,7 +345,7 @@ SctpClient.prototype.connect = function(url, success) {
             
             self.event_emit();
             
-            window.setTimeout(emit_events, 5000);
+            window.setTimeout(emit_events, 1000);
         };
         
         emit_events();
@@ -359,7 +359,6 @@ SctpClient.prototype.connect = function(url, success) {
     this.socket.onerror = function(e) {
         console.log('WebSocket Error ' + e);
     };
-    
 }
 
 

@@ -7,6 +7,7 @@ import os
 from handlers.main import MainHandler
 import handlers.api as api
 import handlers.auth as auth
+import handlers.demo as demo
 import admin.main as admin
 import admin.users as admin_users
 import ws, db
@@ -97,6 +98,10 @@ def main():
             (r"/admin/users/list_rights$", admin_users.UserListRights),
 
             (r"/sctp", ws.SocketHandler),
+            
+            
+            # demo
+            (r"/demo", demo.MainHandler)
             ]
 
     application = tornado.web.Application(
