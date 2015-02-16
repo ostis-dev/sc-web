@@ -1,0 +1,1 @@
+var Space = Space || { version: "0.1.0" };
