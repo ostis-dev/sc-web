@@ -358,38 +358,20 @@ SCg.Editor.prototype = {
 
 
         this.toolSetContent().click(function() {
-            var tool = $(this);
-            function stop_modal() {
-                self.scene.setModal(SCgModalMode.SCgModalNone);
-                tool.popover('destroy');
-                self.scene.updateObjectsVisual();
-            }
-
-            self.scene.setModal(SCgModalMode.SCgModalIdtf);
-            $(this).popover({container: container});
-            $(this).popover('show');
-
-            var input = $(container + ' #scg-set-content-input');
-            var input_content = $(container + " input#content[type='file']");
-
-            // process controls
+            var input_text = $(container + ' textarea#scg-set-content-input');
+            var input_file = $(container + " input#content[type='file']");
             $(container + ' #scg-set-content-apply').click(function() {
                 var obj = self.scene.selected_objects[0];
-                var file = input_content[0].files[0];
+                var file = input_file[0].files[0];
                 if(file != undefined){
                     var fileReader = new FileReader();
                     fileReader.onload = function() {
                         obj.setContent(this.result);
-                        stop_modal();
                     };
                     fileReader.readAsArrayBuffer(file);
                 } else {
-                    obj.setContent(input.val());
-                    stop_modal();
+                    obj.setContent(input_text.val());
                 }
-            });
-            $(container + ' #scg-set-content-cancel').click(function() {
-                stop_modal();
             });
         });
 
