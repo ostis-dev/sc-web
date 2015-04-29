@@ -602,6 +602,28 @@ SCg.Render.prototype = {
             return;
         
         this.translate_started = true;
+
+        if(this.scene.selected_objects.length > 0 && this.scene.selected_objects[0] instanceof SCg.ModelContour){
+            if(render.line_points != -1){
+                if(this.scene.selected_objects[0].text){
+                    this.scene.selected_objects[0].text = null;
+                    var currentPoints = this.scene.selected_objects[0].points;
+                    this.scene.drag_line_points = currentPoints;
+                    this.scene.finishContourCreation();
+                    this.scene.clearSelection();
+                    render.line_point_idx = -1;
+                    d3.event.stopPropagation();
+
+                     if (this.translate_started) {
+                        this.translate_started = false;
+                        return;
+                     }
+                     
+                }else{
+                    this.scene.selected_objects[0].text = "start resize contour";
+                }
+            }
+        } 
     },
     
     onMouseUp: function(window, render) {
