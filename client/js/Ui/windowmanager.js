@@ -73,9 +73,41 @@ SCWeb.ui.WindowManager = {
             printDocument.close();
         });
         
-        $('#history-item-link').popover( {
-            content: $.proxy(self.getUrlToCurrentWindow, self)
+       //////////////////////////////////// ZeroClipboard lib for link copy ///////////////////////////
+
+       var isCopyLinkError = false;
+       $('#history-item-link').click(function(){
+            if(isCopyLinkError){
+                $('#history-item-link').popover( {
+                    content: $.proxy(self.getUrlToCurrentWindow, self)
+                });
+            }
+        });    
+
+
+        var zeroClipboardClient = new ZeroClipboard($('#history-item-link'));
+
+        zeroClipboardClient.on( "ready", function( readyEvent ) {
+            console.log( "ZeroClipboard SWF is ready!" );
+
+            zeroClipboardClient.on( "copy", function( event ) {
+                var url = self.getUrlToCurrentWindow();
+                event.clipboardData.clearData();
+                event.clipboardData.setData("text/plain", url);
+            });
+
+            zeroClipboardClient.on( "aftercopy", function( event ) {
+                console.log("Copied text to clipboard: " + event.data["text/plain"] );
+            });
         });
+
+        zeroClipboardClient.on("error", function(event) {
+            isCopyLinkError = true;
+            ZeroClipboard.destroy();
+            console.log('ZeroClipboard error[name="' + event.name + '"]: ' + event.message);
+        });
+
+        //////////////////////////////////// ZeroClipboard lib for link copy ///////////////////////////
         
         // listen translation events
         SCWeb.core.EventManager.subscribe("translation/update", this, this.updateTranslation);
