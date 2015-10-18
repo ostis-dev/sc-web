@@ -7,7 +7,8 @@ SCWeb.ui.WindowManager = {
     sandboxes: {},
     active_window_id: null,
     active_history_addr: null,
-    
+    page_titles: [],
+    question_addrs: [],
     
     // function to create hash from question addr and format addr
     hash_addr: function(question_addr, fmt_addr) {
@@ -18,9 +19,6 @@ SCWeb.ui.WindowManager = {
         var dfd = new jQuery.Deferred();
         this.ext_langs = params.external_languages;
         
-        this.history_tabs_id = '#history-items';
-        this.history_tabs = $(this.history_tabs_id);
-        
         this.window_container_id = '#window-container';
         this.window_container = $(this.window_container_id);
         
@@ -30,7 +28,7 @@ SCWeb.ui.WindowManager = {
         var ext_langs_items = '';
         for (idx in this.ext_langs) {
             var addr = this.ext_langs[idx];
-            ext_langs_items += '<li><a href="#" sc_addr="' + addr + '">' + addr + '</a></li>';
+            ext_langs_items += '<li><a href="javascript:void(0)" sc_addr="' + addr + '">' + addr + '</a></li>';
         }
         $('#history-item-langs').html(ext_langs_items).find('[sc_addr]').click(function(event) {
 
@@ -99,13 +97,6 @@ SCWeb.ui.WindowManager = {
      * @param {String} question_addr sc-addr of item to append into history
      */
     appendHistoryItem: function(question_addr) {
-        
-        // @todo check if tab exist        
-        var tab_html = '<a class="list-group-item history-item" sc_addr="' + question_addr + '">' +
-                            '<p>' + question_addr + '</p>' +
-                        '</a>';
-
-        this.history_tabs.prepend(tab_html);
                 
         // get translation and create window
         var ext_lang_addr = SCWeb.core.Main.getDefaultExternalLang();
@@ -124,40 +115,46 @@ SCWeb.ui.WindowManager = {
                 
         // setup input handlers
         var self = this;
-        this.history_tabs.find("[sc_addr]").click(function(event) {
-            var question_addr = $(this).attr('sc_addr');
+        History.Adapter.bind(window,'statechange',function(){
+            var state = History.getState();
+            var window_id = state.data.window_id;
+            var question_addr = state.data.question_addr;
+            self.setWindowActive(window_id);
             self.setHistoryItemActive(question_addr);
-            self.setWindowActive(self.hash_addr(question_addr, self.window_active_formats[question_addr]));
+            if (self.page_titles[question_addr]) {
+                document.title = self.page_titles[question_addr];
+            }
         });
 
         // translate added item
         $.when(SCWeb.core.Translation.translate([ question_addr ])).done(function(namesMap) {
             value = namesMap[question_addr];
-            if (value) {
-                $(self.history_tabs_id + " [sc_addr='" + question_addr + "']").text(value);
+            if (value){
+                // Replace state for start page, leave OSTIS title
+                if (history.length == 1){
+                    History.replaceState({window_id: self.active_window_id, question_addr:question_addr}, null, "");
+                    return;
+                }
+                // Check, if GET request already was called by <a href='#'></a> and current URL ends with '#'
+                // then replace state of GET request, else push new state in history.
+                if (document.URL.slice(-1) === '#') {
+                    History.replaceState({window_id: self.active_window_id, question_addr:question_addr}, null, "");
+                } else {
+                    History.pushState({window_id: self.active_window_id, question_addr:question_addr}, null, "");
+                }
+                self.page_titles[question_addr] = value;
+                self.question_addrs.push(question_addr);
+                document.title = value;
             }
         });
     },
-    
-    /**
-     * Removes specified history item
-     * @param {String} addr sc-addr of item to remove from history
-     */
-    removeHistoryItem: function(addr) {
-        this.history_tabs.find("[sc_addr='" + addr + "']").remove();
-    },
-    
+
     /**
      * Set new active history item
      * @param {String} addr sc-addr of history item
      */
     setHistoryItemActive: function(addr) {
-        if (this.active_history_addr) {
-            this.history_tabs.find("[sc_addr='" + this.active_history_addr + "']").removeClass('active').find('.histoy-item-btn').addClass('hidden');
-        }
-        
         this.active_history_addr = addr;
-        this.history_tabs.find("[sc_addr='" + this.active_history_addr + "']").addClass('active').find('.histoy-item-btn').removeClass('hidden');
     },
     
 
@@ -332,6 +329,7 @@ SCWeb.ui.WindowManager = {
 
     // ---------- Translation listener interface ------------
     updateTranslation: function(namesMap) {
+        var self = this;
         // apply translation
         $('#window-header-tools [sc_addr]:not(.btn)').each(function(index, element) {
             var addr = $(element).attr('sc_addr');
@@ -339,6 +337,15 @@ SCWeb.ui.WindowManager = {
                 $(element).text(namesMap[addr]);
             }
         });
-        
+
+        //translate all question addrs on change language, save new text values and change title
+        $.when(SCWeb.core.Translation.translate(self.question_addrs)).done(function(namesMap) {
+            $.each(self.question_addrs, function (index, question_addr) {
+                if (namesMap[question_addr]) {
+                    self.page_titles[question_addr] = namesMap[question_addr];
+                    document.title = self.page_titles[self.active_history_addr];
+                }
+            });
+        });
     },
 };
