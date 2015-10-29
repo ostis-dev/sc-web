@@ -110,9 +110,9 @@ SCWeb.ui.WindowManager = {
                 this.window_active_formats[question_addr] = fmt_addr;
             }
         }
-        
+
         this.setHistoryItemActive(question_addr);
-                
+
         // setup input handlers
         var self = this;
         History.Adapter.bind(window,'statechange',function(){
@@ -121,16 +121,17 @@ SCWeb.ui.WindowManager = {
             var question_addr = state.data.question_addr;
             self.setWindowActive(window_id);
             self.setHistoryItemActive(question_addr);
-            if (self.page_titles[question_addr]) {
-                document.title = self.page_titles[question_addr];
-            }
         });
 
-        // translate added item
+        // Translate added item, push new item state in browser history.
+        // UI elements, such as menu-items, scn-elements, etc. contains <a href='#'></a> and each
+        // agent call provide GET request and change URL with adding # symbol at the end. Also,
+        // result of such GET request automatically pushes into browser history and it's state need to be replaced.
         $.when(SCWeb.core.Translation.translate([ question_addr ])).done(function(namesMap) {
             value = namesMap[question_addr];
             if (value){
-                // Replace state for start page, leave OSTIS title
+                // Replace state for start page. Don't save question title and change document title,
+                // because main page title is unchangeable ("OSTIS" title)
                 if (history.length == 1){
                     History.replaceState({window_id: self.active_window_id, question_addr:question_addr}, null, "");
                     return;
@@ -142,6 +143,7 @@ SCWeb.ui.WindowManager = {
                 } else {
                     History.pushState({window_id: self.active_window_id, question_addr:question_addr}, null, "");
                 }
+                // Save question_addr and title for current page
                 self.page_titles[question_addr] = value;
                 self.question_addrs.push(question_addr);
                 document.title = value;
@@ -155,8 +157,12 @@ SCWeb.ui.WindowManager = {
      */
     setHistoryItemActive: function(addr) {
         this.active_history_addr = addr;
+
+        if (this.page_titles[addr]) {
+            document.title = this.page_titles[addr];
+        }
     },
-    
+
 
     // ------------ Windows ------------
     /**
@@ -166,7 +172,7 @@ SCWeb.ui.WindowManager = {
      */
     appendWindow: function(question_addr, fmt_addr) {
         var self = this;
-        
+
         var f = function(addr, is_struct) {
             var id = self.hash_addr(question_addr, fmt_addr);
             var window_id = 'window_' + question_addr;
@@ -177,11 +183,11 @@ SCWeb.ui.WindowManager = {
 
             self.hideActiveWindow();
             self.windows.push(id);
-            
+
             var sandbox = SCWeb.core.ComponentManager.createWindowSandboxByFormat({
-                format_addr: fmt_addr, 
-                addr: addr, 
-                is_struct: is_struct, 
+                format_addr: fmt_addr,
+                addr: addr,
+                is_struct: is_struct,
                 container: window_id,
                 canEdit: true    //! TODO: check user rights
             });
@@ -193,13 +199,13 @@ SCWeb.ui.WindowManager = {
                 throw "Error while create window";
             };
         };
-        
+
         var translated = function() {
             SCWeb.core.Server.getAnswerTranslated(question_addr, fmt_addr, function(d) {
                 f(d.link, false);
             });
         };
-        
+
         if (SCWeb.core.ComponentManager.isStructSupported(fmt_addr)) {
             // determine answer structure
             window.scHelper.getAnswer(question_addr).done(function (addr) {
@@ -210,7 +216,7 @@ SCWeb.ui.WindowManager = {
         } else
             translated();
     },
-    
+
     /**
      * Remove specified window
      * @param {String} addr sc-addr of window to remove
@@ -218,14 +224,14 @@ SCWeb.ui.WindowManager = {
     removeWindow: function(id) {
         this.window_container.find("[sc_addr='" + addr + "']").remove();
     },
-    
+
     /**
      * Makes window with specified addr active
      * @param {String} addr sc-addr of window to make active
      */
     setWindowActive: function(id) {
         this.hideActiveWindow();
-        
+
         this.active_window_id = id;
         this.showActiveWindow();
     },
@@ -237,7 +243,7 @@ SCWeb.ui.WindowManager = {
 
     showActiveWindow: function() {
         if (this.active_window_id)
-            this.window_container.find("#" + this.active_window_id).removeClass('hidden'); 
+            this.window_container.find("#" + this.active_window_id).removeClass('hidden');
     },
 
     /*!
@@ -270,11 +276,11 @@ SCWeb.ui.WindowManager = {
             dfd.resolve();
             return dfd.promise();
         }
-        
+
         (function(containers_map) {
             SCWeb.core.Server.getLinksFormat(linkAddrs,
                 function(formats) {
-                    
+
                     var result = {};
 
                     for (var cntId in containers_map) {
@@ -282,7 +288,7 @@ SCWeb.ui.WindowManager = {
                         var fmt = formats[addr];
                         if (fmt) {
                             var sandbox = SCWeb.core.ComponentManager.createWindowSandboxByFormat({
-                                format_addr: fmt, 
+                                format_addr: fmt,
                                 addr: addr,
                                 is_struct: false,
                                 container: cntId,
@@ -293,7 +299,7 @@ SCWeb.ui.WindowManager = {
                             }
                         }
                     }
-                    
+
                     dfd.resolve(result);
                 },
                 function() {
@@ -301,10 +307,10 @@ SCWeb.ui.WindowManager = {
                 }
             );
         })(containers_map);
-        
+
         return dfd.promise();
     },
-    
+
     /** Create viewers for specified sc-structures
      * @param {Object} containers_map Map of viewer containers (id: id of container, value: {key: sc-struct addr, ext_lang_addr: sc-addr of external language}})
      */
@@ -313,19 +319,19 @@ SCWeb.ui.WindowManager = {
         for (var cntId in containers_map) {
             if (!containers_map.hasOwnProperty(cntId))
                 continue;
-            
+
             var info = containers_map[cntId];
             res[cntId] = SCWeb.core.ComponentManager.createWindowSandboxByExtLang({
-                ext_lang_addr: info.ext_lang_addr, 
-                addr: info.addr, 
-                is_struct: true, 
+                ext_lang_addr: info.ext_lang_addr,
+                addr: info.addr,
+                is_struct: true,
                 container: cntId,
                 canEdit: false
             });
         }
         return res;
     },
-    
+
 
     // ---------- Translation listener interface ------------
     updateTranslation: function(namesMap) {
@@ -343,9 +349,13 @@ SCWeb.ui.WindowManager = {
             $.each(self.question_addrs, function (index, question_addr) {
                 if (namesMap[question_addr]) {
                     self.page_titles[question_addr] = namesMap[question_addr];
-                    document.title = self.page_titles[self.active_history_addr];
                 }
             });
+            var current_title = self.page_titles[self.active_history_addr];
+            // Check current title existence
+            if (current_title){
+                document.title = current_title;
+            }
         });
     },
 };
