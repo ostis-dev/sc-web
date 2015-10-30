@@ -71,10 +71,6 @@ SCWeb.ui.WindowManager = {
             printDocument.close();
         });
         
-        $('#history-item-link').popover( {
-            content: $.proxy(self.getUrlToCurrentWindow, self)
-        });
-        
         // listen translation events
         SCWeb.core.EventManager.subscribe("translation/update", this, this.updateTranslation);
         SCWeb.core.EventManager.subscribe("translation/get", this, function(objects) {
@@ -131,17 +127,17 @@ SCWeb.ui.WindowManager = {
             value = namesMap[question_addr];
             if (value){
                 // Replace state for start page. Don't save question title and change document title,
-                // because main page title is unchangeable ("OSTIS" title)
+                // because main page title is unchangeable ("OSTIS" title). URL stay the same.
                 if (history.length == 1){
                     History.replaceState({window_id: self.active_window_id, question_addr:question_addr}, null, "");
                     return;
                 }
                 // Check, if GET request already was called by <a href='#'></a> and current URL ends with '#'
-                // then replace state of GET request, else push new state in history.
+                // then replace state of GET request, else push new state in history. Change URL.
                 if (document.URL.slice(-1) === '#') {
-                    History.replaceState({window_id: self.active_window_id, question_addr:question_addr}, null, "");
+                    History.replaceState({window_id: self.active_window_id, question_addr:question_addr}, null, self.getUrlToCurrentWindow());
                 } else {
-                    History.pushState({window_id: self.active_window_id, question_addr:question_addr}, null, "");
+                    History.pushState({window_id: self.active_window_id, question_addr:question_addr}, null, self.getUrlToCurrentWindow());
                 }
                 // Save question_addr and title for current page
                 self.page_titles[question_addr] = value;
