@@ -64,8 +64,20 @@ html.drag {
     height: 100%;
 }
 
+#show-section-button {
+    float: left !important;
+}
+
 .hidden {
     visibility: hidden;
+}
+
+.clear {
+    clear: both;
+}
+
+.half_width {
+    width: 50%;
 }
 
 .no_display {
@@ -149,6 +161,9 @@ html.drag {
     overflow-y: auto;
 }
 
+.panel-body {
+    padding: 8px;
+}
 /* --- search --- */
 .search-processing {
     position: relative;

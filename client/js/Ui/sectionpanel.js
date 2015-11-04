@@ -126,7 +126,19 @@ SCWeb.ui.SectionPanel = {
 
 
         $('#hide-section-button').click(function() {
-            // TODO hide sections
+            $(self.section_container_id).hide();
+            $('#previous-section-button').hide();
+            $('#hide-section-button').hide();
+            $('.panel').css('margin-left','-200px');
+            $('#show-section-button').show();
+        });
+
+        $('#show-section-button').click(function() {
+            $(self.section_container_id).show();
+            $('#previous-section-button').show();
+            $('#hide-section-button').show();
+            $('.panel').css('margin-left','');
+            $('#show-section-button').hide();
         });
 
     },

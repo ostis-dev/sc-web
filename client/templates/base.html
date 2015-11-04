@@ -79,14 +79,18 @@
     <!-- main content -->
     <div id="main-container" class="main-container row">
         <div class="col-xs-2 col-sm-2 col-md-2">
-            <div class="col-xs-2 col-sm-2 col-md-2">
-                <button id="hide-section-button" class="bottom btn btn-primary btn-xs pull-right">
+            <div>
+                <button id="hide-section-button" class="bottom btn btn-primary btn-sm pull-right half_width">
                     <span class="glyphicon glyphicon-remove-sign"></span>
                 </button>
-                <button id="previous-section-button" class="bottom btn btn-primary btn-xs pull-right">
+                <button id="previous-section-button" class="bottom btn btn-primary btn-sm pull-right half_width">
                     <span class="glyphicon glyphicon-arrow-left"></span>
                 </button>
+                <button id="show-section-button" class="bottom btn btn-primary btn-sm pull-right">
+                    <span class="glyphicon glyphicon-list-alt"></span>
+                </button>
             </div>
+            <div class="clear"></div>
             <div id="section-window-container">
                 <!-- there will be placed section decomposition -->
             </div>
@@ -151,6 +155,7 @@
     <script type="text/javascript">
 
         $(document).ready(function() {
+            $('#show-section-button').hide();
             SCWeb.ui.Locker.show();
             var params = {
                         menu_container_id: 'menu_container',

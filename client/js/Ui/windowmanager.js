@@ -177,6 +177,10 @@ SCWeb.ui.WindowManager = {
                                 '</div>';
             self.window_container.prepend(window_html);
 
+            if ( $('#hide-section-button').css('display') == 'none' ){
+                $('.panel').css('margin-left','-200px');
+            }
+
             self.hideActiveWindow();
             self.windows.push(id);
 
