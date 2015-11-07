@@ -109,7 +109,9 @@ SCWeb.ui.SectionPanel = {
         $(self.section_container_id + ' [sc_addr]:not(div)').click(function() {
             var sc_addr = $(this).attr('sc_addr');
             SCWeb.core.Main.doDefaultCommand([sc_addr]);
-            self.doDefaultCommand([sc_addr]);
+            setTimeout(function(){
+                self.doDefaultCommand([sc_addr]);
+            }, 500);
         });
     },
 
@@ -129,7 +131,7 @@ SCWeb.ui.SectionPanel = {
             $(self.section_container_id).hide();
             $('#previous-section-button').hide();
             $('#hide-section-button').hide();
-            $('.panel').css('margin-left','-200px');
+            $('.panel').css('margin-left','-17%');
             $('#show-section-button').show();
         });
 

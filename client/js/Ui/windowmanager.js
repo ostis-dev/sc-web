@@ -9,7 +9,8 @@ SCWeb.ui.WindowManager = {
     active_history_addr: null,
     page_titles: [],
     question_addrs: [],
-    
+    start_page_opened: false,
+
     // function to create hash from question addr and format addr
     hash_addr: function(question_addr, fmt_addr) {
         return question_addr + '_' + fmt_addr;
@@ -128,8 +129,9 @@ SCWeb.ui.WindowManager = {
             if (value){
                 // Replace state for start page. Don't save question title and change document title,
                 // because main page title is unchangeable ("OSTIS" title). URL stay the same.
-                if (history.length == 1){
+                if (history.length == 1 && !self.start_page_opened){
                     History.replaceState({window_id: self.active_window_id, question_addr:question_addr}, null, "");
+                    self.start_page_opened = true;
                     return;
                 }
                 // Check, if GET request already was called by <a href='#'></a> and current URL ends with '#'
@@ -178,7 +180,7 @@ SCWeb.ui.WindowManager = {
             self.window_container.prepend(window_html);
 
             if ( $('#hide-section-button').css('display') == 'none' ){
-                $('.panel').css('margin-left','-200px');
+                $('.panel').css('margin-left','-17%');
             }
 
             self.hideActiveWindow();
