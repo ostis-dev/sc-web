@@ -50,6 +50,22 @@ var SCsViewer = function(sandbox) {
                 }
             }
         });
+        
+        window.scHelper.getLanguages().done(function(langs){
+            var cur_lang = self.sandbox.getCurrentLanguage();
+            for (var i in langs){
+                var lang = langs[i];
+                // third parent of a language node in DOM tree is affected
+                // it contains both a file frame and a language node
+                var affected_div = $(self.container).find("a[sc_addr='" + lang +"']").parent().parent().parent();
+                
+                // only show files for current user language, hide others
+                affected_div.css("display", (lang == cur_lang) ? "" : "none");
+                
+                // show/hide a bullet marker (a previous sibling in document order)
+                affected_div.prev().css("display", (lang == cur_lang) ? "" : "none");
+            }
+        });
     };
     
     this.getObjectsToTranslate = function() {
