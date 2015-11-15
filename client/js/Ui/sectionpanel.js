@@ -28,6 +28,7 @@ SCWeb.ui.SectionPanel = {
         });
 
         self._registerButtonHandler();
+        self._registerSectionPanelHandler();
 
         dfd.resolve();
         return dfd.promise();
@@ -38,9 +39,6 @@ SCWeb.ui.SectionPanel = {
         SCWeb.core.Server.doCommand(cmd_addr, cmd_args, function(result) {
             if (result.question != undefined) {
                 self.fillSectionWindow(result.question);
-                setTimeout(function(){
-                    self._registerSectionPanelHandler();
-                }, 3000);
             }
         });
     },
@@ -106,7 +104,7 @@ SCWeb.ui.SectionPanel = {
     _registerSectionPanelHandler: function() {
         var self = this;
 
-        $(self.section_container_id + ' [sc_addr]:not(div)').click(function() {
+        $(self.section_container_id).delegate(' [sc_addr]:not(div)', 'click', function() {
             var sc_addr = $(this).attr('sc_addr');
             SCWeb.core.Main.doDefaultCommand([sc_addr]);
             setTimeout(function(){
