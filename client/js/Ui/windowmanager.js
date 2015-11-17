@@ -232,10 +232,12 @@ SCWeb.ui.WindowManager = {
      * @param {String} addr sc-addr of window to make active
      */
     setWindowActive: function(id) {
-        this.hideActiveWindow();
+		if (id) {
+			this.hideActiveWindow();
 
-        this.active_window_id = id;
-        this.showActiveWindow();
+			this.active_window_id = id;
+			this.showActiveWindow();
+		}
     },
 
     hideActiveWindow: function() {
