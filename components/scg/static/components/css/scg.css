@@ -124,6 +124,14 @@
     stroke-dasharray: 4, 10;
 }
 
+.SCgNodeEmpty.SCgStateNormal {
+    fill:#7e7e7e;
+}
+
+.SCgNodeEmpty.SCgStateNormal.SCgStateHighlighted {
+    fill:#bbbbbb;
+}
+
 /* --- contours --- */
 .SCgContour {
     fill: #ddddff;
