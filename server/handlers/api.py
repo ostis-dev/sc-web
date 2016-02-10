@@ -492,7 +492,11 @@ class User(base.BaseHandler):
             keys = Keynodes(sctp_client)
             
             # get user sc-addr
-            sc_session = logic.ScSession(self, sctp_client, keys)
+            email = None
+            user = self.get_current_user()
+            if user is not None:
+                email = user.email
+            sc_session = logic.ScSession(self, sctp_client, keys, email)
             user_addr = sc_session.get_sc_addr()
             result = {
                         'sc_addr': user_addr.to_int(),

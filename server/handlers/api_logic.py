@@ -598,7 +598,7 @@ def do_command(sctp_client, keys, cmd_addr, arguments, handler):
 # -------------- work with session -------------------------
 class ScSession:
     
-    def __init__(self, handler, sctp_client, keynodes):
+    def __init__(self, handler, sctp_client, keynodes, email = None):
         """Initialize session class with requets.user object
         """
         
