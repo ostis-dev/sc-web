@@ -7,8 +7,10 @@ SCWeb.ui.WindowManager = {
     sandboxes: {},
     active_window_id: null,
     active_history_addr: null,
-    
-    
+    page_titles: [],
+    question_addrs: [],
+    start_page_opened: false,
+
     // function to create hash from question addr and format addr
     hash_addr: function(question_addr, fmt_addr) {
         return question_addr + '_' + fmt_addr;
@@ -17,9 +19,6 @@ SCWeb.ui.WindowManager = {
     init: function(params) {
         var dfd = new jQuery.Deferred();
         this.ext_langs = params.external_languages;
-        
-        this.history_tabs_id = '#history-items';
-        this.history_tabs = $(this.history_tabs_id);
         
         this.window_container_id = '#window-container';
         this.window_container = $(this.window_container_id);
@@ -30,7 +29,7 @@ SCWeb.ui.WindowManager = {
         var ext_langs_items = '';
         for (idx in this.ext_langs) {
             var addr = this.ext_langs[idx];
-            ext_langs_items += '<li><a href="#" sc_addr="' + addr + '">' + addr + '</a></li>';
+            ext_langs_items += '<li><a href="javascript:void(0)" sc_addr="' + addr + '">' + addr + '</a></li>';
         }
         $('#history-item-langs').html(ext_langs_items).find('[sc_addr]').click(function(event) {
 
@@ -73,10 +72,6 @@ SCWeb.ui.WindowManager = {
             printDocument.close();
         });
         
-        $('#history-item-link').popover( {
-            content: $.proxy(self.getUrlToCurrentWindow, self)
-        });
-        
         // listen translation events
         SCWeb.core.EventManager.subscribe("translation/update", this, this.updateTranslation);
         SCWeb.core.EventManager.subscribe("translation/get", this, function(objects) {
@@ -99,13 +94,6 @@ SCWeb.ui.WindowManager = {
      * @param {String} question_addr sc-addr of item to append into history
      */
     appendHistoryItem: function(question_addr) {
-        
-        // @todo check if tab exist        
-        var tab_html = '<a class="list-group-item history-item" sc_addr="' + question_addr + '">' +
-                            '<p>' + question_addr + '</p>' +
-                        '</a>';
-
-        this.history_tabs.prepend(tab_html);
                 
         // get translation and create window
         var ext_lang_addr = SCWeb.core.Main.getDefaultExternalLang();
@@ -119,47 +107,60 @@ SCWeb.ui.WindowManager = {
                 this.window_active_formats[question_addr] = fmt_addr;
             }
         }
-        
+
         this.setHistoryItemActive(question_addr);
-                
+
         // setup input handlers
         var self = this;
-        this.history_tabs.find("[sc_addr]").click(function(event) {
-            var question_addr = $(this).attr('sc_addr');
+        History.Adapter.bind(window,'statechange',function(){
+            var state = History.getState();
+            var window_id = state.data.window_id;
+            var question_addr = state.data.question_addr;
+            self.setWindowActive(window_id);
             self.setHistoryItemActive(question_addr);
-            self.setWindowActive(self.hash_addr(question_addr, self.window_active_formats[question_addr]));
         });
 
-        // translate added item
+        // Translate added item, push new item state in browser history.
+        // UI elements, such as menu-items, scn-elements, etc. contains <a href='#'></a> and each
+        // agent call provide GET request and change URL with adding # symbol at the end. Also,
+        // result of such GET request automatically pushes into browser history and it's state need to be replaced.
         $.when(SCWeb.core.Translation.translate([ question_addr ])).done(function(namesMap) {
             value = namesMap[question_addr];
-            if (value) {
-                $(self.history_tabs_id + " [sc_addr='" + question_addr + "']").text(value);
+            if (value){
+                // Replace state for start page. Don't save question title and change document title,
+                // because main page title is unchangeable ("OSTIS" title). URL stay the same.
+                if (history.length == 1 && !self.start_page_opened){
+                    History.replaceState({window_id: self.active_window_id, question_addr:question_addr}, null, "");
+                    self.start_page_opened = true;
+                    return;
+                }
+                // Check, if GET request already was called by <a href='#'></a> and current URL ends with '#'
+                // then replace state of GET request, else push new state in history. Change URL.
+                if (document.URL.slice(-1) === '#') {
+                    History.replaceState({window_id: self.active_window_id, question_addr:question_addr}, null, self.getUrlToCurrentWindow());
+                } else {
+                    History.pushState({window_id: self.active_window_id, question_addr:question_addr}, null, self.getUrlToCurrentWindow());
+                }
+                // Save question_addr and title for current page
+                self.page_titles[question_addr] = value;
+                self.question_addrs.push(question_addr);
+                document.title = value;
             }
         });
     },
-    
-    /**
-     * Removes specified history item
-     * @param {String} addr sc-addr of item to remove from history
-     */
-    removeHistoryItem: function(addr) {
-        this.history_tabs.find("[sc_addr='" + addr + "']").remove();
-    },
-    
+
     /**
      * Set new active history item
      * @param {String} addr sc-addr of history item
      */
     setHistoryItemActive: function(addr) {
-        if (this.active_history_addr) {
-            this.history_tabs.find("[sc_addr='" + this.active_history_addr + "']").removeClass('active').find('.histoy-item-btn').addClass('hidden');
-        }
-        
         this.active_history_addr = addr;
-        this.history_tabs.find("[sc_addr='" + this.active_history_addr + "']").addClass('active').find('.histoy-item-btn').removeClass('hidden');
+
+        if (this.page_titles[addr]) {
+            document.title = this.page_titles[addr];
+        }
     },
-    
+
 
     // ------------ Windows ------------
     /**
@@ -169,7 +170,7 @@ SCWeb.ui.WindowManager = {
      */
     appendWindow: function(question_addr, fmt_addr) {
         var self = this;
-        
+
         var f = function(addr, is_struct) {
             var id = self.hash_addr(question_addr, fmt_addr);
             var window_id = 'window_' + question_addr;
@@ -178,13 +179,17 @@ SCWeb.ui.WindowManager = {
                                 '</div>';
             self.window_container.prepend(window_html);
 
+            if ( $('#hide-section-button').css('display') == 'none' ){
+                $('.panel').css('margin-left','-17%');
+            }
+
             self.hideActiveWindow();
             self.windows.push(id);
-            
+
             var sandbox = SCWeb.core.ComponentManager.createWindowSandboxByFormat({
-                format_addr: fmt_addr, 
-                addr: addr, 
-                is_struct: is_struct, 
+                format_addr: fmt_addr,
+                addr: addr,
+                is_struct: is_struct,
                 container: window_id,
                 canEdit: true    //! TODO: check user rights
             });
@@ -196,13 +201,13 @@ SCWeb.ui.WindowManager = {
                 throw "Error while create window";
             };
         };
-        
+
         var translated = function() {
             SCWeb.core.Server.getAnswerTranslated(question_addr, fmt_addr, function(d) {
                 f(d.link, false);
             });
         };
-        
+
         if (SCWeb.core.ComponentManager.isStructSupported(fmt_addr)) {
             // determine answer structure
             window.scHelper.getAnswer(question_addr).done(function (addr) {
@@ -213,7 +218,7 @@ SCWeb.ui.WindowManager = {
         } else
             translated();
     },
-    
+
     /**
      * Remove specified window
      * @param {String} addr sc-addr of window to remove
@@ -221,16 +226,18 @@ SCWeb.ui.WindowManager = {
     removeWindow: function(id) {
         this.window_container.find("[sc_addr='" + addr + "']").remove();
     },
-    
+
     /**
      * Makes window with specified addr active
      * @param {String} addr sc-addr of window to make active
      */
     setWindowActive: function(id) {
-        this.hideActiveWindow();
-        
-        this.active_window_id = id;
-        this.showActiveWindow();
+		if (id) {
+			this.hideActiveWindow();
+
+			this.active_window_id = id;
+			this.showActiveWindow();
+		}
     },
 
     hideActiveWindow: function() {
@@ -240,7 +247,7 @@ SCWeb.ui.WindowManager = {
 
     showActiveWindow: function() {
         if (this.active_window_id)
-            this.window_container.find("#" + this.active_window_id).removeClass('hidden'); 
+            this.window_container.find("#" + this.active_window_id).removeClass('hidden');
     },
 
     /*!
@@ -273,11 +280,11 @@ SCWeb.ui.WindowManager = {
             dfd.resolve();
             return dfd.promise();
         }
-        
+
         (function(containers_map) {
             SCWeb.core.Server.getLinksFormat(linkAddrs,
                 function(formats) {
-                    
+
                     var result = {};
 
                     for (var cntId in containers_map) {
@@ -285,7 +292,7 @@ SCWeb.ui.WindowManager = {
                         var fmt = formats[addr];
                         if (fmt) {
                             var sandbox = SCWeb.core.ComponentManager.createWindowSandboxByFormat({
-                                format_addr: fmt, 
+                                format_addr: fmt,
                                 addr: addr,
                                 is_struct: false,
                                 container: cntId,
@@ -296,7 +303,7 @@ SCWeb.ui.WindowManager = {
                             }
                         }
                     }
-                    
+
                     dfd.resolve(result);
                 },
                 function() {
@@ -304,10 +311,10 @@ SCWeb.ui.WindowManager = {
                 }
             );
         })(containers_map);
-        
+
         return dfd.promise();
     },
-    
+
     /** Create viewers for specified sc-structures
      * @param {Object} containers_map Map of viewer containers (id: id of container, value: {key: sc-struct addr, ext_lang_addr: sc-addr of external language}})
      */
@@ -316,22 +323,23 @@ SCWeb.ui.WindowManager = {
         for (var cntId in containers_map) {
             if (!containers_map.hasOwnProperty(cntId))
                 continue;
-            
+
             var info = containers_map[cntId];
             res[cntId] = SCWeb.core.ComponentManager.createWindowSandboxByExtLang({
-                ext_lang_addr: info.ext_lang_addr, 
-                addr: info.addr, 
-                is_struct: true, 
+                ext_lang_addr: info.ext_lang_addr,
+                addr: info.addr,
+                is_struct: true,
                 container: cntId,
                 canEdit: false
             });
         }
         return res;
     },
-    
+
 
     // ---------- Translation listener interface ------------
     updateTranslation: function(namesMap) {
+        var self = this;
         // apply translation
         $('#window-header-tools [sc_addr]:not(.btn)').each(function(index, element) {
             var addr = $(element).attr('sc_addr');
@@ -339,6 +347,19 @@ SCWeb.ui.WindowManager = {
                 $(element).text(namesMap[addr]);
             }
         });
-        
+
+        //translate all question addrs on change language, save new text values and change title
+        $.when(SCWeb.core.Translation.translate(self.question_addrs)).done(function(namesMap) {
+            $.each(self.question_addrs, function (index, question_addr) {
+                if (namesMap[question_addr]) {
+                    self.page_titles[question_addr] = namesMap[question_addr];
+                }
+            });
+            var current_title = self.page_titles[self.active_history_addr];
+            // Check current title existence
+            if (current_title){
+                document.title = current_title;
+            }
+        });
     },
 };

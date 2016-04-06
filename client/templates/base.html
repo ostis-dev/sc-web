@@ -78,13 +78,24 @@
 
     <!-- main content -->
     <div id="main-container" class="main-container row">
-        <div id="static-window-container" class="col-xs-2 col-sm-2 col-md-2">
-            <div id="history-container" class="panel panel-default">
-                <div>
-                    <ul id="history-items" class="list-group">{# Tabs will be added later #}</ul>
-                </div>
+        <div class="col-xs-2 col-sm-2 col-md-2">
+            <div>
+                <button id="hide-section-button" class="bottom btn btn-primary btn-sm pull-right half_width">
+                    <span class="glyphicon glyphicon-remove-sign"></span>
+                </button>
+                <button id="previous-section-button" class="bottom btn btn-primary btn-sm pull-right half_width">
+                    <span class="glyphicon glyphicon-arrow-left"></span>
+                </button>
+                <button id="show-section-button" class="bottom btn btn-primary btn-sm pull-right">
+                    <span class="glyphicon glyphicon-list-alt"></span>
+                </button>
+            </div>
+            <div class="clear"></div>
+            <div id="section-window-container">
+                <!-- there will be placed section decomposition -->
             </div>
         </div>
+
         <div id="window-header-tools" class="pull-right" style="padding-right: 15px;">
             <div class="btn-group">
                 <button type="button" class="btn btn-success ">
@@ -100,9 +111,6 @@
                 </button>
                 <button type="button" class="btn btn-default" id="history-item-print" sc_control_sys_idtf="ui_control_print_window_content">
                     <span class="glyphicon glyphicon-print"></span>
-                </button>
-                <button type="button" class="btn btn-default" id="history-item-link" data-container="body" data-toggle="popover" data-placement="bottom">
-                    <span class="glyphicon glyphicon-link"></span>
                 </button>
             </div>
             
@@ -147,6 +155,7 @@
     <script type="text/javascript">
 
         $(document).ready(function() {
+            $('#show-section-button').hide();
             SCWeb.ui.Locker.show();
             var params = {
                         menu_container_id: 'menu_container',
