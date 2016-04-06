@@ -159,6 +159,9 @@ SCg.Render.prototype = {
             if (obj.is_highlighted)
                 res += ' SCgStateHighlighted ';
             
+            if (obj.content && (!obj.sc_addr))
+                res += ' NewContent ';
+            
             switch (obj.state) {
                 case SCgObjectState.FromMemory:
                     res += ' SCgStateFromMemory';
