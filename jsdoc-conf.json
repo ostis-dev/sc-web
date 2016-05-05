@@ -1,0 +1,15 @@
+{
+  "source": {
+    "include": ["client/js"],
+    "exclude": ["client/js/test", "client/js/Utils"],
+    "includePattern": ".+\\.js(doc)?$"
+  },
+  "plugins": ["plugins/markdown"],
+  "opts": {
+    "recurse": true,
+    "access": "all",
+    "encoding": "utf8",
+    "destination": "./docs",
+    "readme": "README.md"
+  }
+}
