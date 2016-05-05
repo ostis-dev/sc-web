@@ -1,0 +1,21 @@
+{
+  "name": "sc-web",
+  "version": "0.2.0",
+  "description": "Web oriented sc-models interpreter",
+  "scripts": {
+    "jsdoc": "jsdoc -c jsdoc-conf.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deniskoronchik/sc-web.git"
+  },
+  "author": "denis.koronchik@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/deniskoronchik/sc-web/issues"
+  },
+  "homepage": "https://github.com/deniskoronchik/sc-web#readme",
+  "devDependencies": {
+    "jsdoc": "^3.4.0"
+  }
+}
