@@ -53,13 +53,13 @@ SCg.ModelObject = function(options) {
     }
     
     this.id = ObjectId++;
-
     this.edges = [];    // list of connected edges
     this.need_update = true;    // update flag
     this.state = SCgObjectState.Normal;
     this.is_selected = false;
     this.scene = null;
     this.bus = null;
+    this.contour = null;
 };
 
 SCg.ModelObject.prototype = {
@@ -222,8 +222,7 @@ SCg.ModelObject.prototype.removeEdge = function(edge) {
 /**
  * Remove edge from edges list
  */
-SCg.ModelObject.prototype.removeBus = function(edge) {
-    
+SCg.ModelObject.prototype.removeBus = function() {
     this.bus = null;
 };
 
@@ -235,7 +234,7 @@ SCg.ModelObject.prototype.removeBus = function(edge) {
 SCg.ModelObject.prototype.setScAddr = function(addr, merged) {
     
     // remove old sc-addr from map
-    if (this.sc_addr && this.scene.objects.hasOwnPropery(this.sc_addr)) {
+    if (this.sc_addr && Object.prototype.hasOwnProperty.call(this.scene.objects, this.sc_addr)) {
         delete this.scene.objects[this.sc_addr];
     }
     this.sc_addr = addr;
@@ -369,6 +368,15 @@ SCg.ModelEdge = function(options) {
 };
 
 SCg.ModelEdge.prototype = Object.create( SCg.ModelObject.prototype );
+
+SCg.ModelEdge.prototype.setPosition = function(offset) {
+    var dp = offset.clone().sub(this.position);
+    for (var i = 0; i < this.points.length; i++) {
+        this.points[i].x += dp.x;
+        this.points[i].y += dp.y;
+    }
+    SCg.ModelObject.prototype.setPosition.call(this, offset);
+};
 
 /**
  * Destroy object
@@ -512,8 +520,13 @@ SCg.ModelEdge.prototype.getConnectionPos = function(from, dotPos) {
         else
             beg_pos = this.source_pos;
     } else {
-        beg_pos = new SCg.Vector3(this.points[sector - 1].x, this.points[sector - 1].y, 0);
-        end_pos = new SCg.Vector3(this.points[sector].x, this.points[sector].y, 0);
+        if (this.points.length > sector){
+            beg_pos = new SCg.Vector3(this.points[sector - 1].x, this.points[sector - 1].y, 0);
+            end_pos = new SCg.Vector3(this.points[sector].x, this.points[sector].y, 0);
+        } else {
+            beg_pos = new SCg.Vector3(this.source.x, this.source.y, 0);
+            end_pos = new SCg.Vector3(this.target.x, this.target.y, 0);
+        }
     }
         
     var l_pt = new SCg.Vector3(0, 0, 0);
@@ -662,6 +675,18 @@ SCg.ModelContour.prototype.addNodesWhichAreInContourPolygon = function (nodes) {
     }
 };
 
+SCg.ModelContour.prototype.isEdgeInPolygon = function (edge) {
+    return !edge.contour && this.isNodeInPolygon(edge.source) && this.isNodeInPolygon(edge.target);
+};
+
+SCg.ModelContour.prototype.addEdgesWhichAreInContourPolygon = function (edges) {
+    for (var i = 0; i < edges.length; i++) {
+        if (this.isEdgeInPolygon(edges[i])) {
+            this.addChild(edges[i]);
+        }
+    }
+};
+
 SCg.ModelContour.prototype.getConnectionPos = function (from, dotPos) {
     var points = SCg.Algorithms.polyclip(this.points, from, this.position);
     var nearestIntersectionPoint = new SCg.Vector3(points[0].x, points[0].y, 0);
@@ -699,24 +724,30 @@ SCg.ModelContour.prototype.getCenter = function() {
 SCg.ModelBus = function(options) {
     
     SCg.ModelObject.call(this, options);
-
+    this.id_bus = this.id;
     this.source = null;
-
     if (options.source)
         this.setSource(options.source);
-
     this.source_pos = null; // the begin position of bus in world coordinates
     this.target_pos = null; // the end position of bus in world coordinates
     this.points = [];
     this.source_dot = 0.5;
     this.target_dot = 0.5;
-
     this.previousPoint = null;
     //this.requestUpdate();
     //this.update();
 };
 
 SCg.ModelBus.prototype = Object.create( SCg.ModelObject.prototype );
+
+SCg.ModelBus.prototype.setPosition = function(offset) {
+    var dp = offset.clone().sub(this.position);
+    for (var i = 0; i < this.points.length; i++) {
+        this.points[i].x += dp.x;
+        this.points[i].y += dp.y;
+    }
+    SCg.ModelObject.prototype.setPosition.call(this, offset);
+};
 
 SCg.ModelBus.prototype.update = function() {
     
@@ -750,13 +781,9 @@ SCg.ModelBus.prototype.update = function() {
 };
 
 SCg.ModelBus.prototype.setSource = function(scg_obj) {
-    
-    if (this.source == scg_obj) return; // do nothing
-    
-    if (this.source)
-        this.source.removeBus(this);
-    
+    if (this.source) this.source.removeBus();
     this.source = scg_obj;
+    this.id = scg_obj.id;
     this.source.bus = this;
     this.need_observer_sync = true;
     this.need_update = true;
@@ -821,7 +848,8 @@ SCg.ModelBus.prototype.changePosition = function(mouse_pos) {
 
 SCg.ModelBus.prototype.destroy = function() {
     SCg.ModelObject.prototype.destroy.call(this);
-    
     if (this.source)
-        this.source.removeBus(this);
+        this.source.removeBus();
 };
+
+

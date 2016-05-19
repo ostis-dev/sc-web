@@ -13,6 +13,8 @@ ScKeynodes.prototype.init = function() {
         this.resolveKeynode('nrel_idtf'),
         this.resolveKeynode('nrel_answer'),
         
+        this.resolveKeynode('nrel_language_icon'),
+
         this.resolveKeynode('ui_user'),
         this.resolveKeynode('ui_user_registered'),
         this.resolveKeynode('ui_main_menu'),
