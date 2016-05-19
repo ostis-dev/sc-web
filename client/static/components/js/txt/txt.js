@@ -57,10 +57,39 @@ var TextViewer = function(sandbox){
             
         }).fail(function() {
             container.addClass('sc-content-string');
-            container.text(ArrayBuffer2String(data));
-            dfd.resolve();
-        });    
-
+            var string = ArrayBuffer2String(data);
+            window.sctpClient.iterate_constr(
+                SctpConstrIter(SctpIteratorType.SCTP_ITERATOR_3A_A_F,
+                          [sc_type_node | sc_type_const,
+                           sc_type_arc_pos_const_perm,
+                           self.sandbox.addr
+                          ], 
+                          {"language": 0}),
+                SctpConstrIter(SctpIteratorType.SCTP_ITERATOR_3F_A_F,
+                           [window.scKeynodes.languages,
+                            sc_type_arc_pos_const_perm,
+                            "language"
+                           ]),
+                SctpConstrIter(SctpIteratorType.SCTP_ITERATOR_5F_A_A_A_F,
+                           [
+                            "language",
+                            sc_type_arc_common | sc_type_const,
+                            sc_type_link,
+                            sc_type_arc_pos_const_perm,
+                            window.scKeynodes.nrel_language_icon,
+                           ], 
+                           {"icon": 2})
+            ).done(function(results) {
+                var identifier = results.get(0, "icon");
+                string += "&nbsp;<img src='api/link/content/?addr=" + identifier + "'>";
+                //TODO use text instead of html
+                container.html(string);
+                dfd.resolve();
+            }).fail(function() {
+                container.text(string);
+                dfd.resolve();
+            });
+        }); 
         return dfd.promise();
     },
 
