@@ -1,0 +1,24 @@
+{
+  "name": "sc-web",
+  "version": "0.1.0",
+  "devDependencies": {
+    "grunt": "latest",
+    "grunt-contrib-concat": "latest",
+    "grunt-contrib-uglify": "latest",
+    "grunt-contrib-cssmin": "latest",
+    "grunt-contrib-watch": "latest",
+    "grunt-contrib-copy":"latest",
+    "grunt-newer":"latest",
+    "grunt-bower-task": "~0.4.0"
+  },
+
+   "webCoreDirPath" : "client/js/",
+   "clientJsDirPath" : "client/static/components/js/",
+   "clientCssDirPath" : "client/static/components/css/",
+   "clientHtmlDirPath" : "client/static/components/html/",
+   "clientImgDirPath" : "client/static/components/images/",
+   "githubDirPath" : "components/github/",
+   "htmlDirPath" : "components/html/",
+   "scgDirPath" : "components/scg/",
+   "scsDirPath" : "components/scs/"
+}
