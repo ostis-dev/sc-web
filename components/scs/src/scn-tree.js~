@@ -258,18 +258,6 @@ SCs.SCnTree.prototype = {
             if (!tpl.output && !tpl.ignore)
                 this.triples_process.push(tpl); 
         }
-
-if (keywords.length == 0) {
-	 var nodeRoot = new SCs.SCnTreeNode();   
-           	nodeRoot.type = SCs.SCnTreeNodeType.Keyword;
-           	nodeRoot.element = keywords[0]);
-           	nodeRoot.level = -1;
-           	 
-           	this.nodes.push(nodeRoot);
-           	queue.push(nodeRoot);
-
-            	this._appendAddr(keywords[0]);
-		console.log('Imrkey keynode');
         this.buildLevels(queue, this.triples_process);
     },
     
