@@ -259,10 +259,10 @@ SCs.SCnTree.prototype = {
                 this.triples_process.push(tpl); 
         }
 
-if (keywords.length == 0) {
-	 var nodeRoot = new SCs.SCnTreeNode();   
+`		if (keywords.length == 0) {
+		var nodeRoot = new SCs.SCnTreeNode();   
            	nodeRoot.type = SCs.SCnTreeNodeType.Keyword;
-           	nodeRoot.element = keywords[0]);
+           	nodeRoot.element = this.getKeynode('rrel_key_sc_element');;
            	nodeRoot.level = -1;
            	 
            	this.nodes.push(nodeRoot);
@@ -270,7 +270,7 @@ if (keywords.length == 0) {
 
             	this._appendAddr(keywords[0]);
 		console.log('Imrkey keynode');
-        this.buildLevels(queue, this.triples_process);
+      		this.buildLevels(queue, this.triples_process);
     },
     
     buildLevels: function(queue, triples) {
