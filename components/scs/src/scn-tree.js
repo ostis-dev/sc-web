@@ -262,15 +262,26 @@ SCs.SCnTree.prototype = {
 `		if (keywords.length == 0) {
 		var nodeRoot = new SCs.SCnTreeNode();   
            	nodeRoot.type = SCs.SCnTreeNodeType.Keyword;
-           	nodeRoot.element = this.getKeynode('rrel_key_sc_element');;
+		var indxWthMaxVlue=0;
+		var currMaxInLoop=0;
+		var currMaxInTriple=0;
+		while(l<this.triples.length){
+		currMaxInTriple=0;
+ 		for (m in this.triples){
+              	if (this.triples[m][0].addr == l[1].addr || this.triples[m][2].addr == l[1].addr) {
+		currMaxInTriple+=1;
+                if(currMaxInLoop < currMaxInTriple) {
+		currMaxInLoop=currMaxInLoop;
+		indxWthMaxVlue=l;
+		}}}}
+           	nodeRoot.element = this.triples[indxWthMaxVlue][0];
            	nodeRoot.level = -1;
-           	 
            	this.nodes.push(nodeRoot);
            	queue.push(nodeRoot);
+            	this._appendAddr(this.triples[indxWthMaxVlue][0]);
+	//	console.log('Imrkey keynode');
+      		this.buildLevels(queue, this.triples_process);}
 
-            	this._appendAddr(keywords[0]);
-		console.log('Imrkey keynode');
-      		this.buildLevels(queue, this.triples_process);
     },
     
     buildLevels: function(queue, triples) {
