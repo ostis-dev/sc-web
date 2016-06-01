@@ -259,9 +259,10 @@ SCs.SCnTree.prototype = {
                 this.triples_process.push(tpl); 
         }
 
-`		/*if (keywords.length == 0) {
+`		if (keywords.length == 0) {
 		var nodeRoot = new SCs.SCnTreeNode();   
            	nodeRoot.type = SCs.SCnTreeNodeType.Keyword;
+<<<<<<< HEAD
 		var indxWthMaxVlue=0;
 		var currMaxInLoop=0;
 		var currMaxInTriple=0;
@@ -275,12 +276,15 @@ SCs.SCnTree.prototype = {
 		indxWthMaxVlue=l;
 		}}}}
            	nodeRoot.element = this.triples[indxWthMaxVlue][0];
+=======
+           	nodeRoot.element = this.getKeynode('rrel_key_sc_element');
+>>>>>>> 93cc24489a99ba4090290c371c612b2eb5579d55
            	nodeRoot.level = -1;
            	this.nodes.push(nodeRoot);
            	queue.push(nodeRoot);
             	this._appendAddr(this.triples[indxWthMaxVlue][0]);
 	//	console.log('Imrkey keynode');
-      		this.buildLevels(queue, this.triples_process);}*/
+      		this.buildLevels(queue, this.triples_process);}
 
     },
     

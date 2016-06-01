@@ -259,7 +259,7 @@ SCs.SCnTree.prototype = {
                 this.triples_process.push(tpl); 
         }
 
-`		if (keywords.length == 0) {
+		if (keywords.length == 0) {
 		var nodeRoot = new SCs.SCnTreeNode();   
            	nodeRoot.type = SCs.SCnTreeNodeType.Keyword;
 		var indxWthMaxVlue=0;
