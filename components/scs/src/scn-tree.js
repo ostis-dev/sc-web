@@ -262,7 +262,7 @@ SCs.SCnTree.prototype = {
 `		if (keywords.length == 0) {
 		var nodeRoot = new SCs.SCnTreeNode();   
            	nodeRoot.type = SCs.SCnTreeNodeType.Keyword;
-           	nodeRoot.element = this.getKeynode('rrel_key_sc_element');;
+           	nodeRoot.element = this.getKeynode('rrel_key_sc_element');
            	nodeRoot.level = -1;
            	 
            	this.nodes.push(nodeRoot);
