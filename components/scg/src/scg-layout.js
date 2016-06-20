@@ -3,7 +3,8 @@ var SCgLayoutObjectType = {
     Edge: 1,
     Link: 2,
     Contour: 3,
-    DotPoint: 4
+    DotPoint: 4,
+    Custom: 5
 };
 
 // Layout algorithms
@@ -102,15 +103,15 @@ SCg.LayoutAlgorithmForceBased.prototype.onLayoutTick = function() {
     for (idx in this.nodes) {
         var node_layout = this.nodes[idx];
         
-        if (node_layout.type === SCgLayoutObjectType.Node) {
-            node_layout.object.setPosition(new SCg.Vector3(node_layout.x, node_layout.y, 0));
-        } else if (node_layout.type === SCgLayoutObjectType.Link) {
+        if (node_layout.type === SCgLayoutObjectType.Node ||
+            node_layout.type === SCgLayoutObjectType.Link ||
+            node_layout.type === SCgLayoutObjectType.Contour ||
+            node_layout.type === SCgLayoutObjectType.Custom
+           ) {
             node_layout.object.setPosition(new SCg.Vector3(node_layout.x, node_layout.y, 0));
         } else if (node_layout.type === SCgLayoutObjectType.DotPoint) {
             dots.push(node_layout);
-        } else if (node_layout.type === SCgLayoutObjectType.Contour) {
-            node_layout.object.setPosition(new SCg.Vector3(node_layout.x, node_layout.y, 0));
-        }
+        } 
     }
     
     // setup dot points positions 
@@ -156,38 +157,30 @@ SCg.LayoutManager.prototype.prepareObjects = function() {
     this.edges = new Array();
     var objDict = {};
     
-    // first of all we need to collect objects from scene, and build them representation for layout
-    for (idx in this.scene.nodes) {
-        var node = this.scene.nodes[idx];
-        if (node.contour)
-            continue;
-        
-        var obj = new Object();
-        
-        obj.x = node.position.x;
-        obj.y = node.position.y;
-        obj.object = node;
-        obj.type = SCgLayoutObjectType.Node;
-        
-        objDict[node.id] = obj;
-        this.nodes.push(obj);
+    var self = this;
+    
+    function collectNodeObjects(_array, _type) {
+        for (idx in _array) {
+            var node = _array[idx];
+            if (node.contour)
+                continue;
+
+            var obj = new Object();
+
+            obj.x = node.position.x;
+            obj.y = node.position.y;
+            obj.object = node;
+            obj.type = _type;
+
+            objDict[node.id] = obj;
+            self.nodes.push(obj);
+        }
     }
     
-    for (idx in this.scene.links) {
-        var link = this.scene.links[idx];
-        if (link.contour)
-            continue;
-        
-        var obj = new Object();
-        
-        obj.x = link.position.x;
-        obj.y = link.position.y;
-        obj.object = link;
-        obj.type = SCgLayoutObjectType.Link;
-        
-        objDict[link.id] = obj;
-        this.nodes.push(obj);
-    }
+    // first of all we need to collect objects from scene, and build them representation for layout
+    collectNodeObjects(this.scene.nodes, SCgLayoutObjectType.Node);
+    collectNodeObjects(this.scene.links, SCgLayoutObjectType.Link);
+    collectNodeObjects(this.scene.customs, SCgLayoutObjectType.Custom);
     
     for (idx in this.scene.edges) {
         var edge = this.scene.edges[idx];
@@ -203,21 +196,7 @@ SCg.LayoutManager.prototype.prepareObjects = function() {
         this.edges.push(obj);
     }
     
-    for (idx in this.scene.contours) {
-        var contour = this.scene.contours[idx];
-        if (contour.contour)
-            continue;
-        
-        var obj = new Object();
-        
-        obj.x = contour.position.x;
-        obj.y = contour.position.y;
-        obj.object = contour;
-        obj.type = SCgLayoutObjectType.Contour;
-        
-        objDict[contour.id] = obj;
-        this.nodes.push(obj);
-    }
+    collectNodeObjects(this.scene.contours, SCgLayoutObjectType.Contour);
     
     // store begin and end for edges
     for (idx in this.edges) {

@@ -91,6 +91,7 @@ SCg.Render.prototype = {
         this.d3_nodes = this.d3_container.append('svg:g').selectAll('g');
         this.d3_links = this.d3_container.append('svg:g').selectAll('g');
         this.d3_buses = this.d3_container.append('svg:g').selectAll('path');
+        this.d3_customs = this.d3_container.append('svg:g').selectAll('g');
         this.d3_dragline = this.d3_container.append('svg:g');
         this.d3_line_points = this.d3_container.append('svg:g');
         
@@ -319,6 +320,50 @@ SCg.Render.prototype = {
         eventsWrap(g);
         
         this.d3_buses.exit().remove();
+        
+        // -----------------------------
+         function appendNodeVisual(g) {
+            g.append('svg:use')
+            .attr('xlink:href', function(d) {
+                return '#' + SCgAlphabet.getDefId(d.sc_type); 
+            })
+            .attr('class', 'sc-no-default-cmd ui-no-tooltip');
+        };
+            
+        
+        // add nodes that haven't visual
+        this.d3_nodes = this.d3_nodes.data(this.scene.nodes, function(d) { return d.id; });
+        
+        var g = this.d3_nodes.enter().append('svg:g')
+            .attr('class', function(d) {
+                return self.classState(d, (d.sc_type & sc_type_constancy_mask) ? 'SCgNode' : 'SCgNodeEmpty');
+            })
+            .attr("transform", function(d) {
+                return 'translate(' + d.position.x + ', ' + d.position.y + ')';
+            });
+        // -----------------------------
+        
+        
+        
+        // update customs visual
+        this.d3_customs = this.d3_customs.data(this.scene.customs, function(d) { return d.id} );
+        g = this.d3_customs.enter().append('svg:g')
+            .attr('class', function(d) {
+                return self.classState(d, 'SCgCustom');
+            })
+            .attr("transform", function(d) {
+                return 'translate(' + d.position.x + ', ' + d.position.y + ')';
+            })
+            .append('svg:use')
+                .attr('xlink:href', function(d) {
+                    return '#' + SCgAlphabet.getDefId(d.sc_type); 
+                })
+                .attr('class', 'sc-no-default-cmd ui-no-tooltip');
+        
+        eventsWrap(g);
+        
+        this.d3_customs.exit().remove();
+        
 
         this.updateObjects();
     },
@@ -460,6 +505,25 @@ SCg.Render.prototype = {
             d3_bus.attr('class', function(d) {
                 return self.classState(d, 'SCgBus');
             });
+        });
+        
+        this.d3_customs.each(function(d) {
+            if (!d.need_observer_sync) return; // do nothing
+            d.need_observer_sync = false;
+            
+            if (d.need_update)
+                d.update();
+            
+            var g = d3.select(this)
+                    .attr("transform", 'translate(' + d.position.x + ', ' + d.position.y + ')');
+                            
+            g.select('use')
+                .attr('xlink:href', function(d) {
+                    return '#' + d.template.svgDef; 
+                })
+                .attr("sc_addr", function(d) {
+                    return d.sc_addr;
+                });
         });
     },
     

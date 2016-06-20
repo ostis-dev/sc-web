@@ -26,12 +26,14 @@ var KeyCode = {
 
 SCg.Scene = function(options) {
 
+    this.scStruct = null; // will be created by scgScStructTranslator
     this.render = options.render;
     this.nodes = [];
     this.links = [];
     this.edges = [];
     this.contours = [];
     this.buses = [];
+    this.customs = [];
     
     this.objects = {};
     this.edit_mode = SCgEditMode.SCgModeSelect;
@@ -68,6 +70,7 @@ SCg.Scene = function(options) {
      * in that moment shows modal dialog
      */
     this.modal = SCgModalMode.SCgModalNone;
+
 
 };
 
@@ -122,11 +125,20 @@ SCg.Scene.prototype = {
     
     /**
      * Append new sc.g-contour to scene
-     * @param {SCg.ModelContour} contour Contour to append
+     * @param {SCg.ModelBus} bus Bus to append
      */
     appendBus: function(bus) {
         this.buses.push(bus);
         bus.scene = this;
+    },
+    
+    /**
+     * Append new custom sc.g-object
+     * @param {SCg.ModelCustom} custom Custom objec to append
+     */
+    appendCustom: function(custom) {
+        this.customs.push(custom);
+        custom.scene = this;
     },
     
     /**
@@ -220,6 +232,20 @@ SCg.Scene.prototype = {
         this.appendBus(bus);
         
         return bus;
+    },
+    
+    /*
+     * Create new custom object in scene
+     * @param {SCgAlphabetTemplate} templ Template of custom object
+     */
+    createCustom: function(templ) {
+        var custom = new SCg.ModelCustom({
+           template: templ 
+        });
+        
+        this.appendCustom(custom);
+        
+        return custom;
     },
     
     /**

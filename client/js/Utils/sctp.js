@@ -28,15 +28,17 @@ var sc_type_node_abstract = (0x1000)
 var sc_type_node_material = (0x2000)
 
 
-var sc_type_arc_pos_const_perm = (sc_type_arc_access | sc_type_const | sc_type_arc_pos | sc_type_arc_perm)
+var sc_type_arc_pos_const_perm = (sc_type_arc_access | sc_type_const | sc_type_arc_pos | sc_type_arc_perm);
+var sc_type_arc_pos_var_perm = (sc_type_arc_access | sc_type_var | sc_type_arc_pos | sc_type_arc_perm);
 
 // type mask
-var sc_type_element_mask = (sc_type_node | sc_type_link | sc_type_edge_common | sc_type_arc_common | sc_type_arc_access)
-var sc_type_constancy_mask = (sc_type_const | sc_type_var)
-var sc_type_positivity_mask = (sc_type_arc_pos | sc_type_arc_neg | sc_type_arc_fuz)
-var sc_type_permanency_mask = (sc_type_arc_perm | sc_type_arc_temp)
-var sc_type_node_struct_mask = (sc_type_node_tuple | sc_type_node_struct | sc_type_node_role | sc_type_node_norole | sc_type_node_class | sc_type_node_abstract | sc_type_node_material)
-var sc_type_arc_mask = (sc_type_arc_access | sc_type_arc_common | sc_type_edge_common)
+var sc_type_element_mask = (sc_type_node | sc_type_link | sc_type_edge_common | sc_type_arc_common | sc_type_arc_access);
+var sc_type_constancy_mask = (sc_type_const | sc_type_var);
+var sc_type_positivity_mask = (sc_type_arc_pos | sc_type_arc_neg | sc_type_arc_fuz);
+var sc_type_permanency_mask = (sc_type_arc_perm | sc_type_arc_temp);
+var sc_type_node_struct_mask = (sc_type_node_tuple | sc_type_node_struct | sc_type_node_role | sc_type_node_norole | sc_type_node_class | sc_type_node_abstract | sc_type_node_material);
+var sc_type_arc_mask = (sc_type_arc_access | sc_type_arc_common | sc_type_edge_common);
+var sc_type_all_mask = (sc_type_element_mask | sc_type_constancy_mask | sc_type_positivity_mask | sc_type_permanency_mask | sc_type_node_struct_mask);
 
 var SctpCommandType = {
     SCTP_CMD_UNKNOWN:           0x00, // unkown command
@@ -93,6 +95,20 @@ var SctpEventType = {
     SC_EVENT_REMOVE_ELEMENT:     4
 }
 
+function scTypeVar2Const(_type) {
+    return (_type & ~sc_type_var) | sc_type_const;
+}
+
+function isValidScType(_type) {
+    if (typeof _type !== "number")
+        return false;
+    
+    return ((_type & sc_type_all_mask) == _type);
+}
+
+function isValidScAddr(_addr) {
+    return (typeof _addr === "number") && (_addr != 0);
+}
 
 function String2ArrayBuffer(string) {
     var string = unescape(encodeURIComponent(string)),

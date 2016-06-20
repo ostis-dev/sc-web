@@ -17,13 +17,9 @@ var scgViewerWindow = function(sandbox) {
 
     this.domContainer = sandbox.container;
     this.sandbox = sandbox;
-    this.tree = new SCg.Tree();
     this.editor = new SCg.Editor();
     
     var self = this;
-    if (sandbox.is_struct) {
-        this.scStructTranslator = new scgScStructTranslator(this.editor, this.sandbox);
-    }
 
     var autocompletionVariants = function(keyword, callback, self) {
 
@@ -53,13 +49,14 @@ var scgViewerWindow = function(sandbox) {
             resolveControls: this.sandbox.resolveElementsAddr,
         }
     );
+    
+    if (sandbox.is_struct) {
+        this.scStructTranslator = new scgScStructTranslator(this.editor, this.sandbox);
+    }
 
 
     this.receiveData = function(data) {
         var dfd = new jQuery.Deferred();
-    
-        /*this.collectTriples(data);
-        this.tree.build(this.triples);*/
         this._buildGraph(data);
 
         dfd.resolve();

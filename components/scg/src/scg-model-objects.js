@@ -60,6 +60,7 @@ SCg.ModelObject = function(options) {
     this.is_selected = false;
     this.scene = null;
     this.bus = null;
+    this.scElement = null; // Pointer to ScElement instance
 };
 
 SCg.ModelObject.prototype = {
@@ -339,7 +340,7 @@ SCg.ModelLink.prototype.setContent = function(content, contentType) {
     this.need_observer_sync = true;
 };
 
-// --------------- arc -----------
+// --------------- edge -----------
 
 /**
  * Initialize sc.g-arc(edge) object
@@ -825,3 +826,51 @@ SCg.ModelBus.prototype.destroy = function() {
     if (this.source)
         this.source.removeBus(this);
 };
+
+
+// ----- Compound custom object -----
+// ---------------- link ----------
+SCg.ModelCustom = function(options) {
+    SCg.ModelObject.call(this, options);
+
+    this.template = options.template;
+};
+
+SCg.ModelCustom.prototype = Object.create( SCg.ModelObject.prototype );
+
+SCg.ModelCustom.prototype.getConnectionPos = function(from, dotPos) {
+    
+    var y2 = this.scale.y * 0.5,
+        x2 = this.scale.x * 0.5;
+    
+    var left = this.position.x - x2 - 5,
+        top = this.position.y - y2 - 5,
+        right = this.position.x + x2 + 5,
+        bottom = this.position.y + y2 + 5;
+    
+    var points = SCg.Algorithms.polyclip([
+        new SCg.Vector2(left, top),
+        new SCg.Vector2(right, top),
+        new SCg.Vector2(right, bottom),
+        new SCg.Vector2(left, bottom)
+        ], from, this.position);
+    
+    if (points.length == 0)
+        throw "There are no intersection";
+    
+    // find shortes
+    var dMin = null,
+        res = null;
+    for (var i = 0; i < points.length; ++i) {
+        var p = points[i];
+        var d = SCg.Math.distanceSquared(p, from);
+        
+        if (dMin === null || dMin > d) {
+            dMin = d;
+            res = p;
+        }
+    }
+    
+    return res ? new SCg.Vector3(res.x, res.y, this.position.z) : this.position;
+};
+

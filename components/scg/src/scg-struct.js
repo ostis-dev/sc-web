@@ -1,4 +1,4 @@
-function ScgFromScImpl(_sandbox, _editor, aMapping) {
+function ScgFromScImpl(_sandbox, _editor, aMapping, _scStruct) {
     
     var self = this,
         arcMapping = aMapping,
@@ -7,7 +7,8 @@ function ScgFromScImpl(_sandbox, _editor, aMapping) {
         batch = null,
         tasksLength = 0,
         editor = _editor,
-        sandbox = _sandbox;
+        sandbox = _sandbox,
+        scStruct = _scStruct;
     
     function resolveIdtf(addr, obj) {
         sandbox.getIdentifier(addr, function(idtf) {
@@ -23,6 +24,7 @@ function ScgFromScImpl(_sandbox, _editor, aMapping) {
         
         if (!batch) {
             if (!tasks.length || tasksLength === tasks.length) {
+                SCgAlphabet.updateTemplate(editor.scene);
                 window.clearInterval(self.timeout);
                 self.timeout = 0;
                 return;
@@ -41,11 +43,17 @@ function ScgFromScImpl(_sandbox, _editor, aMapping) {
                 if (editor.scene.getObjectByScAddr(addr))
                     continue;
 
+                var scEl = null;
+                
                 if (type & sc_type_node) {
                     var model_node = editor.scene.createNode(type, randomPos(), '');
                     model_node.setScAddr(addr);
                     model_node.setObjectState(SCgObjectState.FromMemory);
                     resolveIdtf(addr, model_node);
+                    
+                    scEl = new ScElement(addr, type, null, null);
+                    model_node.scElement = scEl;
+                    
                 } else if (type & sc_type_arc_mask) {
                     var bObj = editor.scene.getObjectByScAddr(task[2]);
                     var eObj = editor.scene.getObjectByScAddr(task[3]);
@@ -56,14 +64,22 @@ function ScgFromScImpl(_sandbox, _editor, aMapping) {
                         model_edge.setScAddr(addr);
                         model_edge.setObjectState(SCgObjectState.FromMemory);
                         resolveIdtf(addr, model_edge);
+                        
+                        scEl = new ScElement(addr, type, bObj.scElement, eObj.scElement);
+                        model_edge.scElement = scEl;
                     }
                 } else if (type & sc_type_link) {
                     var containerId = 'scg-window-' + sandbox.addr + '-' + addr + '-' + new Date().getUTCMilliseconds();;
                     var model_link = editor.scene.createLink(randomPos(), containerId);
                     model_link.setScAddr(addr);
                     model_link.setObjectState(SCgObjectState.FromMemory);
+                    
+                    scEl = new ScElement(addr, type, null, null);
+                    model_link.scElement = scEl;
                 }
                 
+                if (scEl)
+                    scStruct.addElement(scEl);
             }
 
             editor.render.update();
@@ -129,9 +145,12 @@ function scgScStructTranslator(_editor, _sandbox) {
         arcMapping = {};
     
     if (!sandbox.is_struct)
-        throw "Snadbox must to work with sc-struct";
+        throw "Sandbox must to work with sc-struct";
     
-    var scgFromSc = new ScgFromScImpl(sandbox, editor, arcMapping);
+    var scStruct = new ScStruct(_sandbox.addr);
+    _editor.scene.scStruct = scStruct;
+    
+    var scgFromSc = new ScgFromScImpl(sandbox, editor, arcMapping, scStruct);
     
     var appendToConstruction = function(obj) {
         var dfd = new jQuery.Deferred();
@@ -167,6 +186,8 @@ function scgScStructTranslator(_editor, _sandbox) {
     };  
     
     return r = {
+        scStruct: scStruct,
+        
         mergedWithMemory: function(obj) {
             if (!obj.sc_addr)
                 throw "Invalid parameter";

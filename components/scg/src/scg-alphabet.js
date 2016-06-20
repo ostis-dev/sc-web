@@ -1,6 +1,24 @@
+/* 
+ * @param {ScElement} _mainElement Element that will be represented by template
+ * @param {ScTemplete} _template Template to search for replacement
+ * @param {String} _svgDef Name of SVG definition, that will represent template
+ */
+function SCgAlphabetTemplate(_mainElement, _template, _svgDef) {
+    var mainElement = _mainElement,
+        template = _template,
+        svgDefName = _svgDef;
+    
+    return {
+        mainElement: mainElement,
+        template: template,
+        svgDef: svgDefName
+    }
+}
+
 var SCgAlphabet = {
     
     scType2Str: {},
+    customTemplates: {},
     
     /**
      * Initialize all definitions, for svg drawer
@@ -152,6 +170,21 @@ var SCgAlphabet = {
       
         g = defs.append('svg:g').attr('id', 'scg.link');
         g.append('svg:rect').attr('fill', '#aaa').attr('stroke-width', '6');
+        
+        // ----------------------------------------------------------------------------
+        /// TODO: get templates from memory
+        g = defs.append('svg:g').attr('id', 'scg.template.test');
+        g.append('svg:rect').attr('fill', '#aaa').attr('stroke-width', '6').attr('x', '-30').attr('y', '-30')
+            .attr('width', '60').attr('height', '60');
+        
+        var mainEl = new ScElement(0, sc_type_link);
+        var langEl = new ScElement(window.scKeynodes.lang_ru, sc_type_const | sc_type_node | sc_type_node_class);
+        var templStruct = new ScStruct();
+        templStruct.addElement(mainEl);
+        templStruct.addElement(langEl);
+        templStruct.addElement(new ScElement(0, sc_type_arc_pos_var_perm, langEl, mainEl));
+        
+        this.customTemplates['scg.template.test'] = new SCgAlphabetTemplate(mainEl, new ScTemplate(templStruct), 'scg.template.test');
     },
     
     /**
@@ -341,5 +374,23 @@ var SCgAlphabet = {
                 .attr('d', position_path);
         }
         
+    }, 
+    
+    /*
+     * @param {SCgScene} scene Scene where replace elements
+     */
+    updateTemplate: function(scene) {
+        
+        for (var key in this.customTemplates) {
+            if (this.customTemplates.hasOwnProperty(key)) {
+                
+                var templ = this.customTemplates[key];
+            
+                templ.template.iterate(scene.scStruct, function(result) {
+                    //console.log(result);
+                    scene.createCustom(templ);
+                });
+            }
+        }
     }
 };
