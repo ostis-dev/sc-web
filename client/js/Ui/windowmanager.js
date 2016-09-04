@@ -241,7 +241,8 @@ SCWeb.ui.WindowManager = {
 
     showActiveWindow: function() {
         if (this.active_window_id)
-            this.window_container.find("#" + this.active_window_id).removeClass('hidden'); 
+            this.window_container.find("#" + this.active_window_id).removeClass('hidden');
+        SCWeb.ui.OpenComponentHandler.callOpenComponentCallback(this.active_window_id);
     },
 
     getActiveWindow: function(id) {
