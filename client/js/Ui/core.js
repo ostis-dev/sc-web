@@ -27,6 +27,7 @@ SCWeb.ui.Core = {
                SCWeb.ui.LanguagePanel.init(data),
                SCWeb.ui.WindowManager.init(data),
                SCWeb.ui.SearchPanel.init(),
+               SCWeb.ui.KeyboardHandler.init(SCWeb.ui.WindowManager),
                self.resolveElementsAddr('body')
             ).done(function() {
 
@@ -47,7 +48,7 @@ SCWeb.ui.Core = {
                     }
                 });
             
-                /*var sc_elements_tooltip_selector = '[sc_addr]:not(.sc-window, .ui-no-tooltip)';
+                var sc_elements_tooltip_selector = '[sc_addr]:not(.sc-window, .ui-no-tooltip)';
                 $('body')
                 .delegate(sc_elements_tooltip_selector, 'mouseover', function(e) {
                     
@@ -56,22 +57,15 @@ SCWeb.ui.Core = {
                     self.tooltip_interval = setInterval(function() {
                         clearInterval(self.tooltip_interval);
                         self.tooltip_interval = null;
-
                         var addr = self.tooltip_element.attr('sc_addr');
                         if (addr) {
-                            SCWeb.core.Server.getTooltips([addr], function(tips) {
-                                var value = tips[addr];
-                                if (value) {
+                            SCWeb.core.Server.resolveIdentifiers([addr], function (idf) {
+                                if (self.tooltip_element) { // check mouseout destroy
                                     self.tooltip_element.tooltip({
-                                        html: true,
                                         placement: 'auto',
-                                        trigger: 'manual',
-                                        title: value,
-                                        animation: true,
-                                        container: 'body'
+                                        title: idf[addr]
                                     }).tooltip('show');
-                                } else
-                                    destroyTooltip();
+                                }
                             }, function() {
                                 destroyTooltip();
                             });
@@ -80,7 +74,10 @@ SCWeb.ui.Core = {
                 }).delegate(sc_elements_tooltip_selector, 'mouseout', function(e) {
                     clearTooltipInterval();
                     destroyTooltip();
-                });*/
+                }).delegate(sc_elements_tooltip_selector, 'keydown', function(e) {
+                    clearTooltipInterval();
+                    destroyTooltip();
+                });
                 
                 $('#help-modal').on('shown.bs.modal', function() {
                     var body = $('#help-modal-body');

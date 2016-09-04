@@ -5,19 +5,19 @@ var SCgAlphabet = {
     /**
      * Initialize all definitions, for svg drawer
      */
-    initSvgDefs: function(defs) {
+    initSvgDefs: function(defs, containerId) {
         
         this.initTypesMapping();
         
         // edge markers
         defs.append('svg:marker')
-            .attr('id', 'end-arrow-access').attr('viewBox', '0 -5 10 10').attr('refX', 0)
+            .attr('id', 'end-arrow-access_' + containerId).attr('viewBox', '0 -5 10 10').attr('refX', 0)
             .attr('markerWidth', 5).attr('markerHeight', 10).attr('orient', 'auto')
           .append('svg:path')
             .attr('d', 'M0,-4L10,0L0,4').attr('fill', '#000');
             
         defs.append('svg:marker')
-            .attr('id', 'end-arrow-common').attr('viewBox', '0 -5 10 10').attr('refX', 0)
+            .attr('id', 'end-arrow-common_' + containerId).attr('viewBox', '0 -5 10 10').attr('refX', 0)
             .attr('markerWidth', 1.5).attr('markerHeight', 6).attr('orient', 'auto')
           .append('svg:path')
             .attr('d', 'M0,-4L10,0L0,4').attr('fill', '#000');
@@ -207,7 +207,7 @@ var SCgAlphabet = {
      * @param egde {SCg.ModelEdge} Object that represent sc.g-edge
      * @param d3_group {} Object that represents svg group
      */
-    updateEdge: function(edge, d3_group) {
+    updateEdge: function(edge, d3_group, containerId) {
         
         // first of all we need to determine if edge has an end marker
         var has_marker = edge.hasArrow();
@@ -256,7 +256,7 @@ var SCgAlphabet = {
                 var p = d3_group.append('svg:path')
                     .classed(main_style, true)
                     .classed('SCgEdgeEndArrowAccess', true)
-                    .style("marker-end", "url(#end-arrow-access)")
+                    .style("marker-end", "url(#end-arrow-access_" + containerId + ")")
                     .attr('d', position_path);
                     
                 if (edge.sc_type & sc_type_constancy_mask) {
@@ -273,12 +273,20 @@ var SCgAlphabet = {
                         .attr('d', position_path);
                 }
             } else if (edge.sc_type & (sc_type_arc_common | sc_type_edge_common)) {
-                
-                var p = d3_group.append('svg:path')
-                    .classed('SCgEdgeCommonBack', true)
-                    .classed('SCgEdgeEndArrowCommon', edge.sc_type & sc_type_arc_common)
-                    .style("marker-end", "url(#end-arrow-common)")
-                    .attr('d', position_path);
+
+                if (edge.sc_type & sc_type_edge_common){
+                    d3_group.append('svg:path')
+                        .classed('SCgEdgeCommonBack', true)
+                        .attr('d', position_path);
+                }
+
+                if (edge.sc_type & sc_type_arc_common) {
+                    d3_group.append('svg:path')
+                        .classed('SCgEdgeCommonBack', true)
+                        .classed('SCgEdgeEndArrowCommon', edge.sc_type & sc_type_arc_common)
+                        .style("marker-end", "url(#end-arrow-common_" + containerId + ")")
+                        .attr('d', position_path);
+                }
                 
                 d3_group.append('svg:path')
                     .classed('SCgEdgeCommonForeground', true)
@@ -314,6 +322,10 @@ var SCgAlphabet = {
         // now we need to draw fuz markers (for now it not supported)
         if (edge.sc_type & sc_type_arc_fuz) {
             d3_group.selectAll('path').attr('stroke', '#f00');
+            d3_group.append('svg:path')
+                .classed('SCgEdgeFuzDash', true)
+                .attr('d', position_path)
+                .attr('stroke', '#f00');
         }
         
     },
