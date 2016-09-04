@@ -106,13 +106,11 @@ GwfObjectNode.prototype.parseObject = function (args) {
 GwfObjectNode.prototype.buildObject = function (args) {
     var scene = args.scene;
     var builder = args.builder;
-
-    var node = scene.createNode(this.attributes["type"], new SCg.Vector3(this.attributes["x"] + GwfObjectController.getXOffset(), this.attributes["y"] + +GwfObjectController.getYOffset(), 0), this.attributes["idtf"]);
-
+    var node = SCg.Creator.createNode(this.attributes["type"], new SCg.Vector3(this.attributes["x"] + GwfObjectController.getXOffset(), this.attributes["y"] + +GwfObjectController.getYOffset(), 0), this.attributes["idtf"]);
+    scene.appendNode(node);
+    scene.appendSelection(node);
     args.scg_object = node;
-
     this.fixParent(args);
-
     node.update();
     return node;
 }
@@ -155,18 +153,15 @@ GwfObjectPair.prototype.parseObject = function (args) {
 GwfObjectPair.prototype.buildObject = function (args) {
     var scene = args.scene;
     var builder = args.builder;
-
     var source = builder.getOrCreate(this.attributes["id_b"]);
     var target = builder.getOrCreate(this.attributes["id_e"]);
-
-    var edge = scene.createEdge(source, target, this.attributes["type"]);
+    var edge = SCg.Creator.createEdge(source, target, this.attributes["type"]);
+    scene.appendEdge(edge);
+    scene.appendSelection(edge);
     edge.source_dot = parseFloat(this.attributes["dotBBalance"]);
     edge.target_dot = parseFloat(this.attributes["dotEBalance"]);
-
-
     var edge_points = this.attributes["points"];
     var points = [];
-
     for (var i = 0; i < edge_points.length; i++) {
         var edge_point = edge_points[i];
         var point = new SCg.Vector2(parseFloat(edge_point.x) + GwfObjectController.getXOffset(), parseFloat(edge_point.y) + GwfObjectController.getYOffset());
@@ -176,7 +171,6 @@ GwfObjectPair.prototype.buildObject = function (args) {
     source.update();
     target.update();
     edge.update();
-
     return edge;
 }
 
@@ -223,15 +217,13 @@ GwfObjectContour.prototype.buildObject = function (args) {
         verticies.push(vertex);
     }
 
-    var contour = new SCg.ModelContour({
-        verticies: verticies
-    });
+    var contour = SCg.Creator.createCounter(verticies);
 
     args.scg_object = contour;
     this.fixParent(args);
 
     scene.appendContour(contour);
-
+    scene.appendSelection(contour);
     contour.update();
     return contour;
 }
@@ -272,9 +264,7 @@ GwfObjectBus.prototype.buildObject = function (args) {
     var builder = args.builder;
 
 
-    var bus = new SCg.ModelBus({});
-
-    bus.setSource(builder.getOrCreate(this.attributes["owner"]));
+    var bus = SCg.Creator.createBus(builder.getOrCreate(this.attributes["owner"]));
     bus.setTargetDot(0);
 
     var bus_points = this.attributes["points"];
@@ -295,7 +285,47 @@ GwfObjectBus.prototype.buildObject = function (args) {
 
 
     scene.appendBus(bus);
+    scene.appendSelection(bus);
     bus.update();
     return bus;
 }
+
+var GwfObjectLink = function (args) {
+    GwfObject.call(this, args);
+    this.content = null;
+    this.type = -1;
+    this.requiredAttrs = ["id", "x", "y", "parent"];
+};
+
+GwfObjectLink.prototype = Object.create(GwfObject.prototype);
+
+GwfObjectLink.prototype.parseObject = function (args) {
+    var link = args.gwf_object;
+    var reader = args.reader;
+    this.attributes = reader.fetchAttributes(link, this.requiredAttrs);
+    if (this.attributes == false) return false;
+    this.attributes["x"] = parseFloat(this.attributes["x"]);
+    this.attributes["y"] = parseFloat(this.attributes["y"]);
+    GwfObjectController.fixOffsetOfPoints({x: this.attributes["x"], y: this.attributes["y"]});
+    this.id = this.attributes["id"];
+    var content = link.getElementsByTagName("content")[0];
+    this.type = reader.fetchAttributes(content, ["type"])["type"];
+    this.content = content.textContent;
+    return this;
+};
+
+GwfObjectLink.prototype.buildObject = function (args) {
+    var scene = args.scene;
+    var link = SCg.Creator.createLink(new SCg.Vector3(this.attributes["x"] + GwfObjectController.getXOffset(),
+                                                      this.attributes["y"] + +GwfObjectController.getYOffset(),
+                                                      0),
+                                      '');
+    link.setContent(this.content);
+    scene.appendLink(link);
+    scene.appendSelection(link);
+    args.scg_object = link;
+    this.fixParent(args);
+    link.update();
+    return link;
+};
 

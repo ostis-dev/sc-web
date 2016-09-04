@@ -1,0 +1,22 @@
+ui_scg_control_tool_switch
+    <- ui_scg_control; sc_node_not_relation;
+    => nrel_main_idtf:
+        [Скрыть/показать дополнительные клавиши]
+        (* <- lang_ru;; *);
+    => nrel_main_idtf:
+        [Hide/show the extra button]
+        (* <- lang_en;; *);
+	<- rrel_key_sc_element:
+    		..e
+		(*
+		<- sc_explanation;;
+   		<= nrel_sc_text_translation:	
+	     ..t1
+	    	(*
+        	-> [Используйте эту функцию для открытия/скрытия дополнительных клавиш панели инструментов] (* <- lang_ru;; *);;
+        	*);
+		..t2
+		(*
+		-> [Use this functon for showing/hidding an extra button's panel] (* <- lang_en;; *);;
+		*);;
+    *);;
