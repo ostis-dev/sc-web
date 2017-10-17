@@ -381,16 +381,16 @@ var SCgAlphabet = {
      */
     updateTemplate: function(scene) {
         
-        for (var key in this.customTemplates) {
-            if (this.customTemplates.hasOwnProperty(key)) {
+        // for (var key in this.customTemplates) {
+        //     if (this.customTemplates.hasOwnProperty(key)) {
                 
-                var templ = this.customTemplates[key];
+        //         var templ = this.customTemplates[key];
             
-                templ.template.iterate(scene.scStruct, function(result) {
-                    //console.log(result);
-                    scene.createCustom(templ);
-                });
-            }
-        }
+        //         templ.template.iterate(scene.scStruct, function(result) {
+        //             //console.log(result);
+        //             scene.createCustom(templ);
+        //         });
+        //     }
+        // }
     }
 };

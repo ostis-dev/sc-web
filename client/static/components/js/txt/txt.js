@@ -21,12 +21,12 @@ var TextViewer = function(sandbox){
         window.sctpClient.iterate_constr(
             SctpConstrIter(SctpIteratorType.SCTP_ITERATOR_3A_A_F,
                           [sc_type_node | sc_type_const,
-                           sc_type_arc_pos_const_perm,
+                           sc_type_arc_access | sc_type_const | sc_type_arc_pos,
                            self.sandbox.addr
                           ], 
                           {"x": 0}),
             SctpConstrIter(SctpIteratorType.SCTP_ITERATOR_3F_A_F,
-                           [window.scKeynodes.binary_types,
+                           [window.scKeynodes.binary_type,
                             sc_type_arc_pos_const_perm,
                             "x"
                            ])
@@ -38,7 +38,7 @@ var TextViewer = function(sandbox){
                 var float32 = new Float32Array(data);
                 str = float32[0];
             } else if (type_addr == window.scKeynodes.binary_int8) {
-                var int8 = new Int8Arrray(data);
+                var int8 = new Int8Array(data);
                 str = int8[0];
             } else if (type_addr == window.scKeynodes.binary_int16) {
                 var int16 = new Int16Array(data);
@@ -46,6 +46,15 @@ var TextViewer = function(sandbox){
             } else if (type_addr == window.scKeynodes.binary_int32) {
                 var int32 = new Int32Array(data);
                 str = int32[0];
+            } else if (type_addr == window.scKeynodes.binary_uint8) {
+                var uint8 = new Uint8Array(data);
+                str = uint8[0];
+            } else if (type_addr == window.scKeynodes.binary_uint16) {
+                var uint16 = new Uint16Array(data);
+                str = uint16[0];
+            } else if (type_addr == window.scKeynodes.binary_uint32) {
+                var uint32 = new Uint32Array(data);
+                str = uint32[0];
             } else {
                 str = ArrayBuffer2String(data);
             }
