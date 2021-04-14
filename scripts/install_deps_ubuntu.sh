@@ -9,4 +9,4 @@ else
 	sudo rm -f get-pip.py
 fi
 sudo pip install --default-timeout=100 future
-sudo pip install tornado sqlalchemy redis==2.9 numpy configparser
+sudo pip install tornado==4.2 sqlalchemy redis==2.9 numpy configparser
