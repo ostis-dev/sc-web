@@ -483,6 +483,14 @@ div[class="tooltip-inner"] {
   padding-top: 15px;
   padding-bottom: 15px;
 }
+
+/* --- int mode checkbox --- */
+#int_mode_container {
+    padding-top: 15px;
+    padding-bottom: 15px;
+    margin-left: 10px;
+  }
+
 /* The switch - the box around the slider */
 .switch {
   position: relative;
