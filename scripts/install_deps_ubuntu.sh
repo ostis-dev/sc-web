@@ -3,10 +3,12 @@ then
 	sudo apt-get install -y python-pip
 else
 	sudo add-apt-repository universe
-	sudo apt-get update
-	curl https://bootstrap.pypa.io/2.7/get-pip.py --output get-pip.py
-	sudo python2 get-pip.py
+	sudo apt update
+	sudo apt install python2
+	sudo apt install wget
+	wget https://bootstrap.pypa.io/2.7/get-pip.py
+	sudo python2.7 get-pip.py
 	sudo rm -f get-pip.py
 fi
 sudo pip install --default-timeout=100 future
-sudo pip install tornado==4.2 sqlalchemy redis==2.9 numpy configparser
+sudo pip2 install tornado==4.2 sqlalchemy redis==2.9 numpy configparser
