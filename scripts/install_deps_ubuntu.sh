@@ -4,8 +4,7 @@ then
 else
 	sudo add-apt-repository universe
 	sudo apt update
-	sudo apt install python2
-	sudo apt install wget
+	sudo apt install python2 wget
 	wget https://bootstrap.pypa.io/2.7/get-pip.py
 	sudo python2.7 get-pip.py
 	sudo rm -f get-pip.py
