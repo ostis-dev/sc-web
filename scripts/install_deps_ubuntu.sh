@@ -4,9 +4,9 @@ then
 else
 	sudo add-apt-repository universe
 	sudo apt update
-	sudo apt install python2 wget
-	wget https://bootstrap.pypa.io/2.7/get-pip.py
-	sudo python2.7 get-pip.py
+	sudo apt install python2 curl
+	curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
+	sudo python2 get-pip.py
 	sudo rm -f get-pip.py
 fi
 sudo pip install --default-timeout=100 future
