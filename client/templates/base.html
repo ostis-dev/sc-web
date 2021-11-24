@@ -90,6 +90,24 @@
           </label>
         </div>
 
+        <div id="int_mode_container" class="navbar-left">
+            <label class="switch">
+              <input type="checkbox" id="int_mode-switching-checkbox">
+              <span class="slider round"></span>
+            </label>
+            <style>
+                #int_mode-label::after {
+                    content: "β";
+                    color: rgb(102, 102, 102);
+                    font-style: italic;
+                    margin-left: 5px;
+                }
+            </style>
+            <label id="int_mode-label" for="int_mode-switching-checkbox" class="normalLabel">
+              <!-- expert mode text will be placed here -->
+            </label>
+          </div>
+
         <div id="language-panel">
             
             <form class="navbar-form navbar-right" sc_control_sys_idtf="ui_control_select_idtf_mode">
@@ -117,19 +135,21 @@
         </div>
         <div id="window-header-tools" class="pull-right">
             <div class="btn-group mode-switching-panel">    <!-- mode-switching-panel -->
-                <button type="button" class="btn btn-default" id="windows-list">
-                    <span class="glyphicon glyphicon-resize-full"></span>
+                <button type="button" class="btn btn-success ">
+                    <span class="glyphicon glyphicon-font"></span>
                 </button>
-                <button type="button" class="histoy-item-btn btn btn-default" data-toggle="dropdown"
-                        sc_control_sys_idtf="ui_control_select_window_type">
+                <button type="button" class="histoy-item-btn btn btn-success" data-toggle="dropdown" sc_control_sys_idtf="ui_control_select_window_type">
                     <span class="glyphicon glyphicon-list-alt"></span>
                 </button>
                 <ul id="history-item-langs" class="dropdown-menu" role="menu">{# languages will be added #}</ul>
                 
+                <button type="button" class="btn btn-primary" id="windows-list">
+                    <span class="glyphicon glyphicon-th-large"></span>
+                </button>
                 <button type="button" class="btn btn-default" id="history-item-print" sc_control_sys_idtf="ui_control_print_window_content">
                     <span class="glyphicon glyphicon-print"></span>
                 </button>
-                <button type="button" class="btn btn-default" id="history-item-link" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="bottom">
+                <button type="button" class="btn btn-default" id="history-item-link" data-container="body" data-toggle="popover" data-placement="bottom">
                     <span class="glyphicon glyphicon-link"></span>
                 </button>
             </div>
@@ -158,7 +178,7 @@
                     <!-- Buttons will be inserted on arguments append -->
                 </div>
             </div>
-            <span class="copyright"></span>
+            <span class="copyright">Copyright © 2012 - 2018 <a href="#">OSTIS</a> </span>
         </div>
     </div>
 
@@ -178,7 +198,6 @@
 
             $('#windows-list').click(function () {
                 $('#static-window-container').toggle();
-                $(this).find('span').toggleClass('glyphicon-resize-small').toggleClass('glyphicon-resize-full');
             });
 
             SCWeb.ui.Locker.show();

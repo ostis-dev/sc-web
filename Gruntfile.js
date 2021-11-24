@@ -4,6 +4,7 @@ module.exports = function(grunt) {
     var htmlDirPath = 'components/html/';
     var scgDirPath = 'components/scg/';
     var scsDirPath = 'components/scs/';
+    var intModeDirPath = 'components/intmode/';
     var webCoreCompPath = 'client/js/';
     var clientJsDirPath = 'client/static/components/js/';
     var clientCssDirPath = 'client/static/components/css/';
@@ -46,8 +47,14 @@ module.exports = function(grunt) {
                       webCoreCompPath + 'Ui/userpanel.js',
                       webCoreCompPath + 'Ui/expertmodepanel.js',
                       webCoreCompPath + 'Ui/ExpertModeHandler.js',
+                      webCoreCompPath + 'Ui/intmodepanel.js',
+                      webCoreCompPath + 'Ui/IntModeHandler.js',
                 ],
                 dest: clientJsDirPath + 'sc-web-core.js',
+            },
+            int_mode : {
+                src: [intModeDirPath + 'modules/*.js'],
+                dest: clientJsDirPath + 'sc-int-mode.js'
             },
             github: {
                 src: [githubDirPath + 'src/*.js'],
@@ -197,6 +204,10 @@ module.exports = function(grunt) {
             core: {
                 files: webCoreCompPath + '**',
                 tasks: ['concat:webcore'],
+            },
+            int_mode: {
+                files: intModeDirPath + '**',
+                tasks: ['concat:int_mode'],
             },
             githubJs: {
                 files: githubDirPath + 'src/**',
